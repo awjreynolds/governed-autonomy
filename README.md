@@ -7,8 +7,8 @@ This repository contains:
 - `docs/governed-autonomy/` - the Governed Autonomy operating model and reference material.
 - `gaps/` - the Governed Autonomy Process Specification profile.
 - `gaps/schema/` - exploratory JSON Schemas for process specs and implementation maps.
-- `gaps/examples/` - reference processes, currently GADD and compliance-review casework.
-- `reference-packages/gadd/` - a fixture copy of the GADD skill package surfaces used to validate the GADD implementation map.
+- `gaps/examples/` - reference process specifications.
+- `reference-packages/` - fixture package surfaces used to validate implementation maps.
 - `scripts/` - GAPS validation and generation tooling.
 - `skills/` and `commands/` - GAPS authoring, validation, and generation skills.
 
@@ -35,10 +35,6 @@ Generate a reviewable skill package from a GAPS process:
 ```bash
 python3 scripts/generate-gaps-skill-package.py gaps/examples/compliance-review/ga-process.yml
 ```
-
-## Relationship to GADD
-
-GADD is the first concrete SDLC implementation of Governed Autonomy. This repository keeps GADD as a reference process and includes fixture package surfaces for validation, but the GADD product and published SDLC skills remain in the `gadd` repository.
 
 ## License
 
