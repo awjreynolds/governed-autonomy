@@ -6,13 +6,15 @@ GADD is the concrete software-delivery methodology. GAPS is the emerging profile
 
 ## Status
 
-GAPS remains exploratory. The current incubating validation profile is built from two reference processes.
+GAPS remains exploratory. The current validation profile is built from four reference processes.
 
 The current surface is intentionally small:
 
 - `examples/gadd/ga-process.yml` expresses GADD as the first reference process.
 - `examples/gadd/implementation.yml` binds that GADD process spec to a reference-package fixture copied from the concrete GADD skill package.
 - `examples/compliance-review/ga-process.yml` expresses a second, unlike casework reference process.
+- `examples/incident-response/ga-process.yml` expresses a time-critical operational response process.
+- `examples/procurement-approval/ga-process.yml` expresses a budget, supplier-risk, and segregation-of-duties process.
 - `schema/ga-process.schema.json` defines the exploratory machine-readable shape.
 - `schema/implementation.schema.json` defines the exploratory implementation-map shape.
 - `../scripts/validate-gaps.py` validates reference processes against the schema and GAPS-specific semantic checks.
@@ -80,11 +82,15 @@ The reference process is acceptable when:
 
 Sparse but honest is better than a large file that invents structure GADD does not yet have.
 
-## Second reference process
+## Additional reference processes
 
-The second reference process is intentionally unlike GADD.
+The additional reference processes are intentionally unlike GADD.
 
 The compliance review example stresses adaptive case flow, long-running state, statutory or policy deadlines, named human identities, multiple authority levels, budget or resource gates, and event-driven escalation.
+
+The incident response example stresses severity escalation, time-boxed containment, rollback authority, evidence preservation, communication approval, and closure under operational pressure.
+
+The procurement approval example stresses budget gates, supplier-risk review, segregation of duties, contract handoff, conflict escalation, and renewal monitoring.
 
 ## Validation
 
@@ -134,5 +140,7 @@ To validate this repository's full GAPS surface, run:
 - `examples/gadd/ga-process.yml` - GADD as the first GAPS reference process.
 - `examples/gadd/implementation.yml` - GADD implementation map for the skill package.
 - `examples/compliance-review/ga-process.yml` - Compliance review casework as the second GAPS reference process.
+- `examples/incident-response/ga-process.yml` - Incident response as a time-critical operational reference process.
+- `examples/procurement-approval/ga-process.yml` - Procurement approval as a budget and supplier governance reference process.
 - `schema/ga-process.schema.json` - Exploratory schema for the GAPS process profile.
 - `schema/implementation.schema.json` - Exploratory schema for implementation maps.

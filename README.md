@@ -7,7 +7,7 @@ This repository contains:
 - `docs/governed-autonomy/` - the Governed Autonomy operating model and reference material.
 - `gaps/` - the Governed Autonomy Process Specification profile.
 - `gaps/schema/` - exploratory JSON Schemas for process specs and implementation maps.
-- `gaps/examples/` - reference process specifications.
+- `gaps/examples/` - validated reference process specifications across software delivery, casework, incident response, and procurement.
 - `reference-packages/` - fixture package surfaces used to validate implementation maps.
 - `scripts/` - GAPS validation and generation tooling.
 - `skills/` and `commands/` - GAPS authoring, validation, and generation skills.

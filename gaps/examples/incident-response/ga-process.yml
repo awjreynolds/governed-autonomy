@@ -1,0 +1,542 @@
+schemaVersion: "0.1"
+status: exploratory
+formatWarning: "GAPS v0.1 is not stable. This file is a reference process, not a compliance, certification, or legal sufficiency artifact."
+
+standards_alignment:
+  posture: "This incident-response profile is compatible with BPMN, CMMN, DMN, OSCAL, NIST CSF, and ISO/IEC 27001 concepts, but does not replace any standard or claim conformance."
+  compatible_concepts:
+    - standard: bpmn
+      applies_to:
+        - severity escalation events
+        - containment handoffs
+        - approval gateways
+        - post-incident review workflow
+      status: candidate
+    - standard: cmmn
+      applies_to:
+        - adaptive incident case state
+        - discretionary forensic tasks
+        - event-triggered escalation
+        - long-running remediation follow-up
+      status: candidate
+    - standard: dmn
+      applies_to:
+        - severity classification decisions
+        - containment authority thresholds
+        - notification route decisions
+        - rollback approval rules
+      status: candidate
+    - standard: oscal
+      applies_to:
+        - control implementation notes
+        - assessment evidence references
+        - incident-response control mappings
+      status: candidate
+  standard_aliases:
+    - concept: severity escalation
+      aliases:
+        - standard: bpmn
+          term: escalation event
+        - standard: gaps
+          term: escalationCondition
+      status: candidate
+    - concept: incident case
+      aliases:
+        - standard: cmmn
+          term: case file
+        - standard: gaps
+          term: canonicalState
+      status: candidate
+    - concept: containment decision
+      aliases:
+        - standard: dmn
+          term: decision
+        - standard: gaps
+          term: approvalCondition
+      status: candidate
+    - concept: control evidence
+      aliases:
+        - standard: oscal
+          term: assessment evidence
+        - standard: gaps
+          term: evidenceReferences
+      status: candidate
+  gaps_extensions:
+    - autonomy_tier
+    - authority_plane
+    - named_human_accountability
+    - severity_bound_authority
+    - time_boxed_containment
+    - event_driven_escalation
+    - rollback_authority_boundary
+
+process:
+  id: incident_response
+  name: Incident Response
+  purpose: >
+    Coordinate detection, triage, containment, eradication, recovery, communication,
+    and post-incident learning while preserving named human accountability during
+    time-critical operational events.
+  scope:
+    includes:
+      - security and reliability incident intake
+      - severity classification
+      - containment and rollback recommendations
+      - evidence capture
+      - internal and external communication preparation
+      - recovery verification
+      - post-incident review and follow-up actions
+    excludes:
+      - autonomous public disclosure
+      - autonomous legal determination
+      - unilateral production shutdown outside approved emergency authority
+      - permanent policy changes without governance approval
+
+canonicalState:
+  source: incident-ledger
+  pathPattern: "incidents/{incidentId}/incident-record.yml"
+  relationshipToGaps:
+    gaProcessYml: "Describes the incident-response process type, roles, severity gates, containment authority, evidence, and drift policy."
+    incidentRecordYml: "Records one incident's current severity, named commander, timeline, evidence, actions, approvals, and follow-up obligations."
+  projectionRule: "Chat, pager, ticketing, status page, monitoring, and postmortem tools are projections. The incident ledger remains canonical for workflow state."
+
+freshness:
+  reviewedAt: "2026-05-18"
+  reviewCadence: quarterly
+  timeboxes:
+    severityTriage:
+      basis: "Initial incident severity should be reviewed quickly enough to avoid unmanaged blast-radius expansion."
+      startEvent: incident_detected
+      targetMinutes: 15
+      warningAtMinutesRemaining: 5
+      ownerRole: incident_commander
+    containmentDecision:
+      basis: "Containment authority must be explicit before destructive or customer-impacting action."
+      startEvent: severity_confirmed
+      targetMinutes: 30
+      warningAtMinutesRemaining: 10
+      ownerRole: incident_commander
+    executiveBriefing:
+      basis: "High-severity incidents require timely executive and communications awareness."
+      startEvent: high_severity_declared
+      targetMinutes: 60
+      warningAtMinutesRemaining: 15
+      ownerRole: executive_sponsor
+  driftPolicy: >
+    If severity, impact, affected systems, containment authority, legal exposure,
+    customer communication, or evidence location changes before this reference
+    process is updated, record drift in the incident ledger and escalate when
+    the change affects authority, safety, disclosure, or recovery quality.
+
+roles:
+  detector:
+    label: Person, system, or team reporting the incident
+    namedIdentities:
+      example: "Monitoring alert, Support Lead, or On-call Engineer"
+    decisionRights:
+      - report symptoms and suspected scope
+      - provide reproduction or alert evidence
+  incident_commander:
+    label: Named Incident Commander
+    namedIdentities:
+      example: "Nina Patel, Incident Commander"
+    authorityLevel: operational_command
+    decisionRights:
+      - declare severity
+      - coordinate response lanes
+      - approve containment within delegated authority
+      - escalate when blast radius or authority changes
+  technical_lead:
+    label: Named Technical Lead
+    namedIdentities:
+      example: "Owen Lee, Platform Lead"
+    authorityLevel: technical_execution
+    decisionRights:
+      - recommend containment and recovery actions
+      - approve technical verification approach
+      - reject unsafe remediation proposals
+  communications_lead:
+    label: Named Communications Lead
+    namedIdentities:
+      example: "Amira Fox, Customer Communications"
+    authorityLevel: communications_authority
+    decisionRights:
+      - approve customer-facing wording
+      - coordinate status-page updates
+      - block unsupported public claims
+  legal_or_privacy_contact:
+    label: Named Legal or Privacy Contact
+    namedIdentities:
+      example: "Eli Morgan, Privacy Counsel"
+    authorityLevel: advisory_or_blocking
+    decisionRights:
+      - advise on notification risk
+      - block autonomous legal or privacy conclusions
+      - require preservation steps
+  executive_sponsor:
+    label: Named Executive Sponsor
+    namedIdentities:
+      example: "Rae Williams, VP Operations"
+    authorityLevel: executive
+    decisionRights:
+      - approve exceptional customer impact
+      - accept residual operational risk
+      - authorize high-impact recovery tradeoffs
+  autonomous_system:
+    label: Incident assistant operating inside approved boundaries
+    authorityLevel: non-human-assistant
+    decisionRights:
+      - summarize alerts and timelines
+      - draft severity and containment recommendations
+      - monitor timeboxes
+      - draft communications for approval
+      - stop when authority, safety, or evidence is insufficient
+
+autonomyVocabulary:
+  tiers:
+    - assist
+    - recommend
+    - draft
+    - execute_with_approval
+    - execute_within_limits
+    - autonomous_with_monitoring
+  riskTiers:
+    - low
+    - medium
+    - high
+    - human_only
+  gateTypes:
+    - advisory
+    - validating
+    - blocking
+    - escalating
+  authorityPlanes:
+    - data_plane
+    - control_plane
+
+lanes:
+  detection_and_triage:
+    purpose: Accept an incident signal, create canonical state, classify severity, and assign command.
+    activities:
+      - capture source signal
+      - create incident record
+      - assign incident commander
+      - classify preliminary severity
+      - start response timeboxes
+    states:
+      - signal_received
+      - incident_opened
+      - severity_pending
+      - severity_confirmed
+      - false_positive_closed
+    autonomousResponsibilities:
+      - summarize source alerts and symptoms
+      - correlate recent deploys, alerts, and customer reports
+      - draft preliminary severity recommendation
+      - identify missing minimum triage evidence
+      - monitor triage timebox
+    authority:
+      plane: data_plane
+      autonomyTier: recommend
+      riskTier: medium
+      allowed:
+        - draft incident summary
+        - recommend severity
+        - prepare initial timeline
+      prohibited:
+        - declare final severity without named incident commander
+        - close incident as false positive without human review
+        - suppress contradictory alert evidence
+    evidence:
+      input:
+        - alert payload
+        - customer or internal report
+        - monitoring snapshot
+        - recent change log
+      completion:
+        - incident-record.yml
+        - named incident commander
+        - preliminary timeline
+        - severity rationale
+    gates:
+      - id: commander_assignment
+        gateType: blocking
+        approvalRole: incident_commander
+        approvalCondition: "Named incident commander accepts command before coordinated response begins."
+        escalationCondition: "No qualified commander is available within the triage timebox."
+      - id: severity_validation
+        gateType: validating
+        approvalRole: incident_commander
+        approvalCondition: "Incident commander validates severity, scope, and minimum evidence."
+        escalationCondition: "Severity may be high, customer-impacting, safety-impacting, or privacy-relevant."
+
+  containment_and_stabilization:
+    purpose: Decide and execute reversible containment actions inside explicit blast-radius and authority limits.
+    activities:
+      - identify affected systems
+      - propose containment options
+      - approve rollback or mitigation
+      - execute bounded action
+      - record customer and system impact
+    states:
+      - containment_options_pending
+      - containment_approved
+      - containment_in_progress
+      - stabilized
+      - containment_escalated
+    autonomousResponsibilities:
+      - draft containment options with expected blast radius
+      - identify reversible and irreversible actions
+      - prepare command checklist for approved action
+      - monitor stability indicators after action
+    authority:
+      plane: data_plane
+      autonomyTier: execute_with_approval
+      riskTier: high
+      allowed:
+        - execute pre-approved low-blast-radius diagnostic commands
+        - draft rollback checklist
+        - update incident timeline after approved actions
+      prohibited:
+        - perform destructive containment without explicit approval
+        - broaden blast radius beyond approved boundary
+        - change production policy or access controls as a permanent fix
+    evidence:
+      input:
+        - confirmed severity
+        - affected system list
+        - containment options
+        - rollback plan
+      completion:
+        - approved containment decision
+        - action log with timestamps
+        - stability signal snapshot
+        - residual impact note
+    gates:
+      - id: containment_approval
+        gateType: blocking
+        approvalRole: incident_commander
+        approvalCondition: "Incident commander approves containment action, blast radius, rollback path, and owner."
+        escalationCondition: "Containment may cause customer data loss, service-wide outage, safety impact, or irreversible change."
+      - id: executive_risk_acceptance
+        gateType: escalating
+        approvalRole: executive_sponsor
+        approvalCondition: "Executive sponsor accepts exceptional customer, revenue, safety, or reputation impact."
+        escalationCondition: "Containment tradeoff exceeds delegated operational authority."
+
+  investigation_and_evidence:
+    purpose: Preserve evidence and determine causal hypotheses without corrupting source data.
+    activities:
+      - snapshot logs and metrics
+      - preserve relevant artifacts
+      - build event timeline
+      - identify causal hypotheses
+      - mark uncertainty
+    states:
+      - evidence_preservation_pending
+      - evidence_preserved
+      - hypothesis_drafting
+      - root_cause_candidate_ready
+      - investigation_blocked
+    autonomousResponsibilities:
+      - collect approved read-only evidence
+      - draft timeline from logs and chat
+      - identify gaps and contradictions
+      - recommend forensic escalation when evidence may be sensitive
+    authority:
+      plane: data_plane
+      autonomyTier: execute_within_limits
+      riskTier: medium
+      allowed:
+        - run approved read-only queries
+        - index evidence references
+        - draft causal hypotheses with confidence notes
+      prohibited:
+        - alter or delete source evidence
+        - infer blame or legal fault
+        - access restricted evidence without approval
+    evidence:
+      input:
+        - incident timeline
+        - log and metric sources
+        - access approval where required
+        - affected component inventory
+      completion:
+        - evidence index
+        - preserved snapshot references
+        - hypothesis register
+        - uncertainty log
+    gates:
+      - id: evidence_preservation
+        gateType: validating
+        approvalRole: technical_lead
+        approvalCondition: "Technical lead confirms evidence sources, preservation method, and read-only boundaries."
+        escalationCondition: "Evidence may include sensitive data, legal hold material, or privileged records."
+      - id: restricted_evidence_access
+        gateType: escalating
+        approvalRole: legal_or_privacy_contact
+        approvalCondition: "Legal or privacy contact approves access to restricted or sensitive evidence."
+        escalationCondition: "Investigation requires personal data, customer data, privileged material, or regulated logs."
+
+  communication_and_notification:
+    purpose: Prepare and issue accurate, approved communication for internal stakeholders and affected parties.
+    activities:
+      - draft internal update
+      - draft customer or status update
+      - review claims against evidence
+      - approve notification route
+      - record issued communication
+    states:
+      - communication_needed
+      - draft_update_ready
+      - approval_pending
+      - communication_issued
+      - notification_escalated
+    autonomousResponsibilities:
+      - draft status updates from approved facts
+      - maintain audience-specific update log
+      - flag unsupported claims
+      - remind owners of notification timeboxes
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: high
+      allowed:
+        - draft communication
+        - summarize approved facts
+        - prepare notification checklist
+      prohibited:
+        - publish public or customer communication
+        - make legal, privacy, or liability statements
+        - speculate on root cause before evidence review
+    evidence:
+      input:
+        - approved facts
+        - severity and impact assessment
+        - audience list
+        - notification policy
+      completion:
+        - approved communication text
+        - named approver
+        - issued communication log
+        - unsupported-claim review
+    gates:
+      - id: communication_approval
+        gateType: blocking
+        approvalRole: communications_lead
+        approvalCondition: "Communications lead approves wording, audience, timing, and unsupported-claim review."
+        escalationCondition: "Message may affect public disclosure, customer trust, legal risk, or regulated notification."
+      - id: legal_notification_review
+        gateType: escalating
+        approvalRole: legal_or_privacy_contact
+        approvalCondition: "Legal or privacy contact confirms whether notification obligations apply."
+        escalationCondition: "Incident may involve personal data, contractual notice, regulatory notification, or legal exposure."
+
+  recovery_and_closure:
+    purpose: Verify recovery, approve closure, capture lessons, and track follow-up remediation.
+    activities:
+      - verify service health
+      - confirm customer impact has ended
+      - approve closure
+      - conduct post-incident review
+      - create follow-up actions
+    states:
+      - recovery_in_progress
+      - recovery_verified
+      - closure_pending
+      - incident_closed
+      - follow_up_tracking
+    autonomousResponsibilities:
+      - summarize recovery evidence
+      - draft post-incident review
+      - identify follow-up actions and owners
+      - monitor overdue remediation tasks
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: medium
+      allowed:
+        - draft recovery verification
+        - draft post-incident report
+        - recommend follow-up actions
+      prohibited:
+        - close incident without named approval
+        - mark remediation complete without evidence
+        - assign blame or disciplinary conclusions
+    evidence:
+      input:
+        - containment action log
+        - recovery metrics
+        - communication log
+        - evidence index
+      completion:
+        - recovery verification
+        - closure approval
+        - post-incident review
+        - follow-up action register
+    gates:
+      - id: recovery_validation
+        gateType: validating
+        approvalRole: technical_lead
+        approvalCondition: "Technical lead confirms service health, residual risk, and recovery evidence."
+        escalationCondition: "Recovery is partial, unstable, unverified, or requires exceptional risk acceptance."
+      - id: closure_approval
+        gateType: blocking
+        approvalRole: incident_commander
+        approvalCondition: "Incident commander approves closure with evidence, communications, and follow-up ownership recorded."
+        escalationCondition: "Closure would hide unresolved customer impact, unknown cause, or unowned remediation."
+
+governedAutonomyRiskPatterns:
+  uncontrolledExecution:
+    coveredBy:
+      - containment_approval
+      - executive_risk_acceptance
+  missingHumanAccountability:
+    coveredBy:
+      - commander_assignment
+      - closure_approval
+  evidenceFreeClosure:
+    coveredBy:
+      - recovery_validation
+      - evidence_preservation
+  projectionDrift:
+    coveredBy:
+      - canonicalState.projectionRule
+      - communication_approval
+  authorityExpansion:
+    coveredBy:
+      - severity_validation
+      - restricted_evidence_access
+      - executive_risk_acceptance
+
+controlMappings:
+  - source: NIST CSF
+    controlId: RS.RP
+    mappingStatus: candidate
+    implementationStatus: "Incident response planning concepts are represented as lanes, gates, and canonical state."
+    evidenceReferences:
+      - incident-record.yml
+      - post-incident review
+  - source: ISO/IEC 27001
+    controlId: A.5.24
+    mappingStatus: candidate
+    implementationStatus: "Incident management responsibilities and procedures are modeled as named roles, gates, and evidence records."
+    evidenceReferences:
+      - incident commander assignment
+      - containment approval
+      - closure approval
+  - source: OSCAL
+    controlId: incident-response-profile
+    mappingStatus: unmapped
+    implementationStatus: "Fields leave room for later OSCAL control implementation and assessment evidence export."
+    evidenceReferences:
+      - controlMappings
+      - evidence index
+
+knownGaps:
+  - id: live-runtime-adapter
+    summary: "This reference process does not execute incident actions or integrate with pager, chat, monitoring, or status-page systems."
+  - id: jurisdiction-specific-notification
+    summary: "Legal, privacy, and regulatory notification rules are placeholders and must be replaced by local policy."
+  - id: severity-taxonomy-localization
+    summary: "Severity labels and timeboxes are illustrative; adopting organizations must bind them to local incident policy."
