@@ -14,6 +14,12 @@ This repository contains:
 
 GAPS is not a replacement for BPMN, CMMN, DMN, OSCAL, NIST AI RMF, ISO/IEC 42001, or the EU AI Act. It is an exploratory Governed Autonomy profile that should align with those standards where they already own the underlying concept.
 
+## Website
+
+The public documentation front door is:
+
+https://awjreynolds.github.io/governed-autonomy/
+
 ## Quick start
 
 Run the core validation suite:

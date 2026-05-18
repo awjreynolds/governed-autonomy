@@ -1,0 +1,12 @@
+title: Governed Autonomy
+description: Process governance for work that may include autonomous systems.
+theme: minima
+
+header_pages:
+  - index.md
+  - gaps.md
+  - examples.md
+  - quickstart.md
+
+github:
+  repository_url: https://github.com/awjreynolds/governed-autonomy
