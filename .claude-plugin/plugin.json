@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "governed-autonomy",
+  "version": "0.1.0",
+  "description": "Governed Autonomy and GAPS authoring, validation, and generation skills.",
+  "author": {
+    "name": "awjreynolds"
+  },
+  "homepage": "https://github.com/awjreynolds/governed-autonomy",
+  "repository": "https://github.com/awjreynolds/governed-autonomy",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "governed-autonomy",
+    "gaps",
+    "governance",
+    "process"
+  ],
+  "commands": [
+    "./commands/gaps/author.md",
+    "./commands/gaps/validate.md",
+    "./commands/gaps/generate.md"
+  ]
+}

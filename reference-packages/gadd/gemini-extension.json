@@ -1,0 +1,25 @@
+{
+  "name": "gadd",
+  "version": "0.1.0",
+  "contextFileName": "GEMINI.md",
+  "commands": [
+    "/gadd:setup",
+    "/gadd:next",
+    "/gadd:triage",
+    "/gadd:research",
+    "/gadd:scope",
+    "/gadd:elaborate",
+    "/gadd:refine",
+    "/gadd:approve",
+    "/gadd:design",
+    "/gadd:plan",
+    "/gadd:decompose",
+    "/gadd:implement",
+    "/gadd:verify",
+    "/gadd:close",
+    "/gadd:archive",
+    "/gaps:author",
+    "/gaps:validate",
+    "/gaps:generate"
+  ]
+}

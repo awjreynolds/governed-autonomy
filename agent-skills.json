@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "name": "governed-autonomy",
+  "displayName": "Governed Autonomy",
+  "version": "0.1.0",
+  "description": "Governed Autonomy and GAPS authoring, validation, and skill-package generation.",
+  "license": "MIT",
+  "repository": "https://github.com/awjreynolds/governed-autonomy",
+  "canonicalSkillRoot": "skills",
+  "commands": [
+    {
+      "command": "/gaps:author",
+      "skill": "gaps-author",
+      "path": "skills/gaps-author",
+      "purpose": "Author or revise a GAPS process specification from an existing governed process."
+    },
+    {
+      "command": "/gaps:validate",
+      "skill": "gaps-validate",
+      "path": "skills/gaps-validate",
+      "purpose": "Validate GAPS process specifications and implementation maps."
+    },
+    {
+      "command": "/gaps:generate",
+      "skill": "gaps-generate",
+      "path": "skills/gaps-generate",
+      "purpose": "Generate reviewable skill-package skeletons from a GAPS process specification."
+    }
+  ]
+}

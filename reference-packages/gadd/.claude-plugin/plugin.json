@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "gadd",
+  "version": "0.1.0",
+  "description": "GADD governed autonomy workflow skills with GAPS process specification validation.",
+  "author": {
+    "name": "awjreynolds"
+  },
+  "homepage": "https://github.com/awjreynolds/gadd",
+  "repository": "https://github.com/awjreynolds/gadd",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "gadd",
+    "github",
+    "prd",
+    "sdd",
+    "planning",
+    "gaps"
+  ],
+  "commands": [
+    "./commands/gadd/setup.md",
+    "./commands/gadd/next.md",
+    "./commands/gadd/triage.md",
+    "./commands/gadd/research.md",
+    "./commands/gadd/scope.md",
+    "./commands/gadd/elaborate.md",
+    "./commands/gadd/refine.md",
+    "./commands/gadd/approve.md",
+    "./commands/gadd/design.md",
+    "./commands/gadd/plan.md",
+    "./commands/gadd/decompose.md",
+    "./commands/gadd/implement.md",
+    "./commands/gadd/verify.md",
+    "./commands/gadd/close.md",
+    "./commands/gadd/archive.md",
+    "./commands/gaps/author.md",
+    "./commands/gaps/validate.md",
+    "./commands/gaps/generate.md"
+  ]
+}
