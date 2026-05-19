@@ -1,13 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-python3 scripts/validate-gaps.py
-python3 scripts/validate-gaps-implementation.py
-python3 -m unittest discover tests/gaps
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
 
+echo "==> Validating GAPS v0.1 reference specs"
+python3 scripts/validate-gaps.py
+
+echo "==> Validating GAPS v0.1 GADD implementation map"
+python3 scripts/validate-gaps-implementation.py
+
+echo "==> Validating GAPS v1 catalogs"
+python3 scripts/validate-catalogs.py
+
+echo "==> Validating GAPS v1 reference specs"
+for spec in gaps/examples/v1/*/ga-process.v1.yml; do
+  [ -e "$spec" ] || continue
+  python3 scripts/validate-gaps-v1.py "$spec"
+done
+
+echo "==> Running test suites"
+python3 -m unittest discover tests/gaps -v
+
+echo "==> Generating GAPS v0.1 package previews"
 python3 scripts/generate-gaps-skill-package.py tests/gaps/fixtures/tiny-process/ga-process.yml --output-root /tmp/governed-autonomy-generator-check
 python3 scripts/generate-gaps-skill-package.py gaps/examples/compliance-review/ga-process.yml --output-root /tmp/governed-autonomy-compliance-review-generator-check
 python3 scripts/generate-gaps-skill-package.py gaps/examples/incident-response/ga-process.yml --output-root /tmp/governed-autonomy-incident-response-generator-check
 python3 scripts/generate-gaps-skill-package.py gaps/examples/procurement-approval/ga-process.yml --output-root /tmp/governed-autonomy-procurement-approval-generator-check
 python3 scripts/generate-gaps-skill-package.py gaps/examples/gadd/ga-process.yml --output-root /tmp/governed-autonomy-gadd-generator-check
 python3 scripts/validate-gaps-implementation.py /tmp/governed-autonomy-gadd-generator-check/gaps/generated/gadd/implementation.yml
+
+echo "All Governed Autonomy validation checks passed."

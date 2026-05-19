@@ -24,6 +24,23 @@ The current surface is intentionally small:
 
 There is no BPMN/CMMN/DMN/OSCAL exporter or runtime target yet.
 
+## v1.0.0 Incubation
+
+GAPS v1.0.0 is in active design. v1 lives alongside v0.1 during the
+deprecation window and uses a separate validator, schema, and catalogs:
+
+- `gaps/schema/v1/` — v1 JSON Schemas (ga-process + catalog meta-schemas).
+- `gaps/catalogs/v1/` — controlled vocabularies (actions, evidence kinds,
+  risk patterns). OSCAL control catalogs follow in Phase 1b.
+- `gaps/examples/v1/` — v1 reference specs.
+- `scripts/validate-gaps-v1.py` — v1 structural schema validator.
+- `scripts/validate-catalogs.py` — catalog meta-validator.
+
+v1.0.0 adopts OSCAL structurally for evidence and control mappings, and
+adopts CMMN case-and-stage and DMN decision-table concepts conceptually in
+GAPS-native YAML. See `docs/superpowers/specs/2026-05-18-gaps-v1-0-0-design.md`
+for the full architecture.
+
 ## Relationship to existing standards
 
 GAPS is not intended to become a competing process notation.
