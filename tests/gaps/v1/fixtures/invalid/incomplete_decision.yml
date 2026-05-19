@@ -1,0 +1,77 @@
+gapsVersion: "1.0.0"
+specStatus: draft
+conformanceLevel: descriptive
+
+process:
+  id: invalid-incomplete-decision
+  name: Invalid fixture - incomplete gate decision
+  purpose: Triggers gate-decisions rule.
+  scope:
+    includes: [test fixture]
+    excludes: [any real process]
+
+substrate:
+  oscalControlCatalogs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+  actionCatalog: gaps/catalogs/v1/actions.yml
+  evidenceCatalog: gaps/catalogs/v1/evidence-kinds.yml
+  riskPatternCatalog: gaps/catalogs/v1/risk-patterns.yml
+
+roles:
+  - id: approver
+    label: Approver
+    accountabilityScope: Test fixture only.
+
+evidenceModel:
+  caseFileItems:
+    - id: prd
+      kind: artifact-reference
+      label: PRD
+      producer: lane:single_lane
+      consumer:
+        - role:approver
+
+lanes:
+  - id: single_lane
+    label: Single lane
+    purpose: Test only.
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: low
+      allowedActions:
+        - draft-artifact
+      prohibitedActions:
+        - approve-own-work
+    skills:
+      - test-fixture-skill
+
+gates:
+  - id: prd_gate
+    label: PRD gate
+    gateType: blocking
+    approvalRole: approver
+    decision:
+      inputs:
+        - prd
+      rules:
+        - when: undeclared_thing == "yes"
+          then: approve
+
+projectionPolicy:
+  canonicalStateSource: repo-local-ledger
+  pathPattern: state/**
+
+riskPatterns:
+  - patternRef: approval-theater
+    mitigations: [N/A]
+
+controlAssessment:
+  catalogRefs: []
+  controlImplementations: []
+
+freshness:
+  reviewedAt: "2026-05-18"
+  driftPolicy: Test fixture.
+
+knownGaps: []
