@@ -1,0 +1,556 @@
+catalogId: actions
+catalogVersion: v1
+description: >
+  Controlled vocabulary of action primitives used in GAPS v1 lane authority
+  blocks, role decisionRights, and lane autonomousResponsibilities. Each
+  action has a default autonomy tier and default risk tier; lane-level
+  declarations may tighten (move toward more restrictive) but should not
+  loosen these defaults without justification.
+
+actions:
+  # ------------------------------ data-plane-read ------------------------------
+  - id: gather-context
+    label: Gather context from sources
+    category: data-plane-read
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Read state from internal or external sources without mutating them. Used
+      to assemble inputs for downstream decisions.
+    examples:
+      - "read repository files for code review context"
+      - "query an external tracker for ticket state"
+
+  - id: read-repo-evidence
+    label: Read repository evidence
+    category: data-plane-read
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Read repository files, commit history, or local artifacts in support of
+      a governed action.
+
+  - id: read-external-system-state
+    label: Read external system state
+    category: data-plane-read
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Query an external system (issue tracker, identity directory, monitoring
+      dashboard) read-only.
+
+  - id: observe-process-state
+    label: Observe process state
+    category: data-plane-read
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Inspect the canonical state record for the in-flight process or work
+      item without mutation.
+
+  - id: observe-evidence
+    label: Observe evidence
+    category: data-plane-read
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Read previously recorded evidence items.
+
+  # ----------------------------- data-plane-draft ------------------------------
+  - id: draft-artifact
+    label: Draft a reviewable artifact
+    category: data-plane-draft
+    defaultAutonomyTier: draft
+    defaultRiskTier: low
+    definition: >
+      Produce an artifact intended for human review. The artifact is not
+      persisted as approved state until a gate approves it.
+    examples:
+      - "draft a Product Requirement Document"
+      - "draft a verification report"
+
+  - id: draft-decision-record
+    label: Draft a decision record
+    category: data-plane-draft
+    defaultAutonomyTier: draft
+    defaultRiskTier: low
+    definition: >
+      Produce a reviewable decision rationale capturing options considered,
+      tradeoffs, and proposed conclusion.
+
+  - id: propose-route
+    label: Propose a route
+    category: data-plane-draft
+    defaultAutonomyTier: recommend
+    defaultRiskTier: low
+    definition: >
+      Recommend a triage or routing outcome for human selection. Does not
+      commit the route until approved.
+
+  - id: propose-classification
+    label: Propose a classification
+    category: data-plane-draft
+    defaultAutonomyTier: recommend
+    defaultRiskTier: medium
+    definition: >
+      Recommend a classification (severity, category, tier) for human
+      confirmation.
+
+  - id: propose-decomposition
+    label: Propose work decomposition
+    category: data-plane-draft
+    defaultAutonomyTier: draft
+    defaultRiskTier: medium
+    definition: >
+      Recommend a breakdown of larger work into child work items or slices.
+
+  - id: propose-design
+    label: Propose a technical design
+    category: data-plane-draft
+    defaultAutonomyTier: draft
+    defaultRiskTier: medium
+    definition: >
+      Recommend a technical approach including architecture, contracts, and
+      tradeoffs.
+
+  - id: propose-plan
+    label: Propose an execution plan
+    category: data-plane-draft
+    defaultAutonomyTier: draft
+    defaultRiskTier: medium
+    definition: >
+      Recommend a sequenced execution plan including dependencies and
+      verification approach.
+
+  - id: propose-mitigation
+    label: Propose a mitigation
+    category: data-plane-draft
+    defaultAutonomyTier: recommend
+    defaultRiskTier: medium
+    definition: >
+      Recommend a control, remediation, or compensating measure for an
+      identified risk or gap.
+
+  - id: recommend-readiness
+    label: Recommend readiness for approval
+    category: data-plane-draft
+    defaultAutonomyTier: recommend
+    defaultRiskTier: low
+    definition: >
+      Signal that an artifact or boundary is review-ready. Does not constitute
+      approval.
+
+  # ---------------------------- data-plane-persist -----------------------------
+  - id: record-evidence
+    label: Record evidence
+    category: data-plane-persist
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Write an evidence item to canonical state. Append-only; supersedes via
+      new evidence rather than mutation of prior records.
+
+  - id: update-local-state
+    label: Update local state within boundary
+    category: data-plane-persist
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Modify repo-local or process-local artifacts within an approved scope
+      boundary.
+
+  - id: edit-repository-file-in-boundary
+    label: Edit repository file within approved boundary
+    category: data-plane-persist
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: medium
+    definition: >
+      Modify code, configuration, or documentation files within an approved
+      Work Item, Pull Request, or Change Request scope.
+
+  - id: run-verification
+    label: Run verification commands
+    category: data-plane-persist
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Execute tests, linters, type checkers, security scanners, or local
+      validation commands.
+
+  - id: run-validation
+    label: Run validation against canonical rules
+    category: data-plane-persist
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Execute schema validators, policy validators, or canonical-state
+      validators against in-flight or persisted artifacts.
+
+  - id: annotate-existing-artifact
+    label: Annotate an existing artifact
+    category: data-plane-persist
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Add notes, cross-references, or supplementary context to an artifact
+      that has already been approved or recorded.
+
+  # ---------------------------- data-plane-external ----------------------------
+  - id: project-to-external-system
+    label: Project content to an external system
+    category: data-plane-external
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: medium
+    definition: >
+      Post a one-way projection of canonical state to a collaboration surface
+      (chat, ticket comment) without making the external system authoritative.
+
+  - id: mutate-external-system
+    label: Mutate state in an external system
+    category: data-plane-external
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: high
+    definition: >
+      Change state in an external tracker, identity system, or operational
+      tool. Requires explicit human confirmation.
+
+  - id: dispatch-notification
+    label: Dispatch a notification
+    category: data-plane-external
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: medium
+    definition: >
+      Send an email, chat message, webhook, or other notification to an
+      external recipient or system.
+
+  - id: open-external-ticket
+    label: Open an external ticket
+    category: data-plane-external
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: medium
+    definition: >
+      Create a new item in an external tracker (Issue, Incident, Change
+      Request).
+
+  - id: comment-on-external-ticket
+    label: Comment on an external ticket
+    category: data-plane-external
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Add a comment to an existing external item.
+
+  # ------------------------------ control-plane --------------------------------
+  - id: approve-gate
+    label: Approve a named gate
+    category: control-plane
+    defaultAutonomyTier: human_only
+    defaultRiskTier: high
+    definition: >
+      Record explicit human approval of a defined gate. Promotes governed
+      transitions on canonical state.
+    roleAffinity: [approver, product_authority, technical_authority]
+
+  - id: approve-scope-boundary
+    label: Approve a scope boundary
+    category: control-plane
+    defaultAutonomyTier: human_only
+    defaultRiskTier: high
+    definition: >
+      Approve a defined scope envelope for subsequent autonomous execution.
+    roleAffinity: [approver, product_authority, technical_authority]
+
+  - id: approve-closure
+    label: Approve closure of work
+    category: control-plane
+    defaultAutonomyTier: human_only
+    defaultRiskTier: high
+    definition: >
+      Approve final closure of a process or work item, including acceptance of
+      verification outcomes.
+    roleAffinity: [approver]
+
+  - id: approve-route
+    label: Approve a triage route
+    category: control-plane
+    defaultAutonomyTier: human_only
+    defaultRiskTier: medium
+    definition: >
+      Approve a routing decision when downstream work depends on the route.
+    roleAffinity: [approver, technical_authority, product_authority]
+
+  - id: revoke-approval
+    label: Revoke a prior approval
+    category: control-plane
+    defaultAutonomyTier: human_only
+    defaultRiskTier: high
+    definition: >
+      Reverse a previously recorded approval. Requires recording a reason.
+    roleAffinity: [approver]
+
+  - id: record-gate-decision
+    label: Record a gate decision outcome
+    category: control-plane
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: medium
+    definition: >
+      Write the outcome of a gate evaluation (approve, escalate, reject) to
+      canonical state. May be performed by an autonomous system within limits
+      when the gate's decision table is deterministic and within scope.
+
+  - id: transition-state
+    label: Transition canonical state
+    category: control-plane
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: medium
+    definition: >
+      Advance the canonical state record for a process or work item to the
+      next state per the lane's transition rules.
+
+  # --------------------------------- meta --------------------------------------
+  - id: escalate-to-human
+    label: Escalate to a human
+    category: meta
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Pause autonomous execution and request a human decision. Used when
+      authority boundary is insufficient or evidence is unclear.
+
+  - id: escalate-to-higher-authority
+    label: Escalate to higher authority
+    category: meta
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Route a decision to an authority above the current approver.
+
+  - id: request-clarification
+    label: Request clarification from a participant
+    category: meta
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Ask a participant for additional input needed to proceed.
+
+  - id: request-evidence
+    label: Request additional evidence
+    category: meta
+    defaultAutonomyTier: autonomous_with_monitoring
+    defaultRiskTier: low
+    definition: >
+      Ask for additional evidence to support a gate or decision.
+
+  - id: record-known-gap
+    label: Record a known gap
+    category: meta
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Log an unresolved gap for later attention without halting the current
+      flow.
+
+  - id: record-non-goal
+    label: Record an explicit non-goal
+    category: meta
+    defaultAutonomyTier: execute_within_limits
+    defaultRiskTier: low
+    definition: >
+      Explicitly mark something as out of scope for the current process or
+      work item.
+
+  - id: archive-closed-work
+    label: Archive closed work
+    category: meta
+    defaultAutonomyTier: execute_with_approval
+    defaultRiskTier: low
+    definition: >
+      Move closed artifacts to a defined archive location. Does not modify
+      historical record.
+
+  - id: unarchive-work
+    label: Unarchive previously archived work
+    category: meta
+    defaultAutonomyTier: human_only
+    defaultRiskTier: medium
+    definition: >
+      Restore archived artifacts to active state.
+
+  # -------------------------- prohibited-anti-pattern --------------------------
+  - id: approve-own-work
+    label: Approve own work
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      The producer of an artifact also approves it. Always prohibited at any
+      autonomous tier; allowed only when the role explicitly carries both
+      producer and approver decision rights and a separate human attestation
+      records the dual hat.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: close-unverified-work
+    label: Close unverified work
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Mark work as closed without verification evidence supporting closure.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: mutate-canonical-state-silently
+    label: Mutate canonical state without a recorded transition
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Change canonical state without producing a corresponding transition
+      evidence record.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: bypass-gate
+    label: Bypass a defined gate
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Skip a gate defined by the process specification.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: expand-scope-silently
+    label: Expand scope without explicit approval
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Add scope to in-flight work without an approved scope-change record.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: alter-recorded-evidence
+    label: Alter recorded evidence retroactively
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Modify the content of a previously recorded evidence item rather than
+      appending superseding evidence.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: destroy-evidence-or-state
+    label: Destroy evidence or canonical state irreversibly
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Irreversibly delete evidence items or canonical state.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: circumvent-policy-threshold
+    label: Circumvent a policy threshold
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Structure work to fall below a defined policy threshold that would
+      otherwise require higher authority.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: conceal-material-information
+    label: Conceal material information from an approver
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Withhold information from an approver that is material to the decision.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: sign-binding-document
+    label: Enter a binding commitment
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Sign a contract or enter any externally binding legal or financial
+      commitment.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: make-binding-policy-interpretation
+    label: Make a binding policy or legal interpretation
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Issue an interpretation of policy, regulation, or law that the
+      organization will treat as authoritative.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: declare-final-classification
+    label: Declare a final classification authoritatively
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Declare an incident severity, customer impact, regulatory category, or
+      similar classification as the final authoritative outcome.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: downgrade-required-authority
+    label: Downgrade the authority required for an action
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Lower the authority level the process specification requires for an
+      action.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: infer-from-missing-evidence
+    label: Infer a fact from the absence of evidence
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Treat the absence of an evidence item as positive evidence of a
+      conclusion.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: impersonate-role
+    label: Act as a role not assigned to the actor
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Take an action while represented as a role that is not assigned to the
+      executing actor.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: route-without-required-evidence
+    label: Route work without required evidence
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Make a routing decision that downstream work depends on without the
+      minimum evidence the lane requires for that route.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: fork-canonical-state
+    label: Create a parallel canonical state record
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Create a competing canonical state record outside the defined
+      canonical-state path.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
+
+  - id: perform-destructive-containment
+    label: Perform irreversible containment
+    category: prohibited-anti-pattern
+    defaultAutonomyTier: human_only
+    defaultRiskTier: human_only
+    definition: >
+      Take an irreversible containment action during incident or risk
+      response (delete data, terminate accounts, take systems offline) without
+      a human-approved containment plan.
+    alwaysProhibitedAt: [draft, execute_with_approval, execute_within_limits, autonomous_with_monitoring]
