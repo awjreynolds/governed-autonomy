@@ -25,6 +25,18 @@
       "skill": "gaps-generate",
       "path": "skills/gaps-generate",
       "purpose": "Generate reviewable skill-package skeletons from a GAPS process specification."
+    },
+    {
+      "command": "/gaps:lift",
+      "skill": "gaps-lift",
+      "path": "skills/gaps-lift",
+      "purpose": "Reverse-lift a generated GAPS v1 skill package into a structural spec representation."
+    },
+    {
+      "command": "/gaps:round-trip",
+      "skill": "gaps-round-trip",
+      "path": "skills/gaps-round-trip",
+      "purpose": "Verify a GAPS v1 spec round-trips through the generator and lift."
     }
   ]
 }
