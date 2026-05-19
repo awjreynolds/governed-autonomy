@@ -178,9 +178,10 @@ Conventions:
 - **`local_definitions` is top-level** — `local:` refs may appear anywhere in the file (actions, evidence, escalation conditions). Every `local:` ref must have an entry in the top-level `local_definitions` map of at least 20 characters.
 - **`steps[*].requires_role` is required** — every step names the role responsible for executing it. For agent-executable steps, this is the autonomous agent role (`role:agent`). For human steps, a human role. This field makes ownership deterministic and powers `W009`.
 - **Step authority merge semantics**:
-  - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Step inherits process allowed only when the step omits this field. Rationale: steps can only *narrow* what they are allowed to do; inheriting and then adding silently is too easy to get wrong.
-  - `authority_overrides.prohibited_actions` is **unioned** with the process-level prohibitions. Step-level prohibited additions are allowed; step-level *removals* of inherited prohibitions are not. Rationale: prohibitions are safety constraints — a step cannot weaken them.
+  - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Steps may set an allowed action that is not in the process default (e.g., an investigate step may use `data-plane-read` actions the process default doesn't list). Rationale: process `allowed_actions` is the default *list*, not a hard ceiling; the load-bearing safety constraint is `prohibited_actions`, not `allowed_actions`.
+  - `authority_overrides.prohibited_actions` is **unioned** with the process-level prohibitions. Step-level prohibited additions are allowed; step-level *removals* of inherited prohibitions are not. Rationale: prohibitions are safety constraints — a step cannot weaken them. This is the actual mechanism that keeps step-level discretion bounded.
   - `authority_overrides.autonomy_tier`, when present, **replaces** the process default for that step.
+  - `authority_overrides.justification`, when present, is a free-text string explaining why this step deviates from the process default. Required by `W005` whenever the step's autonomy tier is more permissive than the process default.
   - **Effective allowed** = step allowed (if set) else process allowed. **Effective prohibited** = process prohibited ∪ step prohibited.
   - `E005` fires when any action appears in both effective allowed and effective prohibited.
 - **Autonomy tier lattice** (least to most permissive): `human_only < assist < recommend < draft < execute_with_approval < execute_within_limits < autonomous_with_monitoring`. Used by `W005` to detect step-level escalation of autonomy.
@@ -332,7 +333,7 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `E003a` catalog-ref-missing | A `catalog:` ref does not exist in the referenced catalog |
 | `E003b` local-ref-undefined | A `local:` ref has no entry in `local_definitions` or its definition is under 20 chars |
 | `E003c` internal-ref-missing | A `role:`/`step:`/`lane:`/`evidence:` ref does not exist in the file |
-| ~~`E004`~~ | Self-approval detection is moved to the critique skill. Lint cannot detect it deterministically without a `steps[*].executed_by` field, which this design declines to add. Critique catches it semantically. |
+| `E004` self-approval | For any gate, `gate.requires_role` must not equal `requires_role` of any step that produces an evidence item the gate requires. Catches the classic anti-pattern of the same role both executing the work and approving it. Implementable now that `steps[*].requires_role` exists. |
 | `E005` action-conflict | Same action in both `allowed_actions` and `prohibited_actions` after step-override merge |
 | `E006` step-without-skill | A `steps[*].id` has no matching `skills/<step-id>/SKILL.md` |
 | `E007` skill-without-step | A `skills/<id>/SKILL.md` has no matching entry in `steps` |
@@ -340,6 +341,7 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `E009` agent-accountable | A role with `autonomous: true` has non-empty `accountable_for` (operating model: agents do not own accountability) |
 | `E010` dead-gate | A gate requires evidence that no step produces |
 | `E011` investigate-with-write | A `step_kind: investigate` step's effective allowed actions (after merge) include any catalog action whose `category` is not `data-plane-read`. The `meta` category is **not** whitelisted because it includes mutating actions (`record-known-gap`, `archive-closed-work`, etc.). If an investigation must ask a human, split it into a read-only investigate step followed by a separate escalate/ask step. |
+| `E012` step-role-missing | Every entry in `steps[*]` has a `requires_role` field whose value resolves to a defined role. There is no inheritance — each step names its responsible role explicitly. |
 
 ### Warnings
 
@@ -349,7 +351,7 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `W002` blast-radius-undefined | `risk.blast_radius` missing or `unknown` |
 | `W003` evidence-without-consumer | An evidence item has no `consumer` |
 | `W004` step-purpose-missing | A step's `purpose` is missing or under 20 chars |
-| `W005` autonomy-mismatch | Step autonomy override is more permissive than process default without justification |
+| `W005` autonomy-mismatch | Step `authority_overrides.autonomy_tier` is more permissive than the process default (per the autonomy lattice) AND `authority_overrides.justification` is missing or under 20 characters. Authors can suppress the warning by either tightening the override or supplying a real justification. |
 | `W006` local-without-rationale | A `local:` ref's definition is under 20 chars |
 | `W007` orphan-gate | A gate references no steps in `blocks_steps` |
 | `W008` projection-as-canonical | A value in `state.projections` also appears as `state.canonical` |
