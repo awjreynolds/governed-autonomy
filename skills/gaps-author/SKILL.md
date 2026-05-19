@@ -5,6 +5,17 @@ description: Use when the user says /gaps:author, wants to write or revise a GAP
 
 # /gaps:author
 
+## GAPS v1 (preferred)
+
+For new specs, author v1 directly:
+
+- Use `gaps/schema/v1/ga-process.schema.json` as the structural reference.
+- Use catalog ids from `gaps/catalogs/v1/actions.yml`, `evidence-kinds.yml`, and `risk-patterns.yml` for every `allowedActions`, `prohibitedActions`, `evidenceModel.caseFileItems[].kind`, and `riskPatterns[].patternRef`.
+- Declare a `conformanceLevel` honestly (`descriptive` -> `machine-validatable` -> `generative`).
+- Validate with `python3 scripts/validate-gaps-v1.py <spec>` after every meaningful edit.
+
+The v0.1 guidance below is retained for the deprecation window. New specs should not be authored at v0.1.
+
 Author or revise one GAPS process specification.
 
 This command is a standalone, agent-agnostic GAPS command. Follow this file directly; do not require any other installed skill.

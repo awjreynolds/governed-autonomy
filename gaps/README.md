@@ -24,6 +24,20 @@ The current surface is intentionally small:
 
 There is no BPMN/CMMN/DMN/OSCAL exporter or runtime target yet.
 
+## v0.1 deprecation
+
+GAPS v0.1 is in deprecation. New specs should be authored at v1.0.0. The
+v0.1 schema, validator, and generator remain available for the
+deprecation window but receive only bug fixes:
+
+- `gaps/schema/ga-process.schema.json` — v0.1 schema (frozen).
+- `scripts/validate-gaps.py` — v0.1 validator (frozen).
+- `scripts/generate-gaps-skill-package.py` — v0.1 generator (frozen).
+
+v0.1 reference specs continue to validate against the v0.1 validator. A
+migrator (`scripts/migrate-gaps-v0-to-v1.py`) produces a v1 spec at
+descriptive conformance from any v0.1 spec.
+
 ## v1.0.0 Incubation
 
 GAPS v1.0.0 is in active design. v1 lives alongside v0.1 during the
@@ -38,6 +52,8 @@ deprecation window and uses a separate validator, schema, and catalogs:
 - `gaps/examples/v1/` — v1 reference specs.
 - `scripts/validate-gaps-v1.py` — v1 structural schema validator.
 - `scripts/validate-catalogs.py` — catalog meta-validator.
+
+The v1.0.0 reference docs live at `docs/governed-autonomy/gaps/`.
 
 v1.0.0 adopts OSCAL structurally for evidence and control mappings, and
 adopts CMMN case-and-stage and DMN decision-table concepts conceptually in

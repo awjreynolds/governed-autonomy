@@ -39,6 +39,8 @@
 - `CHANGELOG.md`
 
 **Modified files:**
+- `scripts/gaps_v1_generator/implementation_map.py` — add top-level gate and evidence ids to the v1 implementation binding when required for round-trip recovery
+- `gaps/examples/v1/benefits-eligibility-review/expected/implementation.v1.yml` — refresh generated snapshot when the implementation binding changes
 - `agent-skills.json` — register `/gaps:lift` and `/gaps:round-trip`
 - `gemini-extension.json` — same
 - `skills/gaps-author/SKILL.md` — point at v1 author guidance
@@ -220,6 +222,8 @@ git commit -m "Add GAPS v1 reverse-lift tool"
 **Files:**
 - Create: `scripts/gaps_v1_lift/diff.py`
 - Create: `scripts/gaps-round-trip.py`
+- Modify if the smoke test exposes missing structural binding: `scripts/gaps_v1_generator/implementation_map.py`
+- Refresh if the generated implementation map changes: `gaps/examples/v1/benefits-eligibility-review/expected/implementation.v1.yml`
 
 The round-trip diff compares the spec's structural surface (lane ids, state ids, transition ids, gate ids, evidence ids, fingerprint expectations) against the lifted equivalent. Free-text mismatches (label text, accountability scope wording) do not count as failures; the round-trip property is structural.
 

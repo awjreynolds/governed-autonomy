@@ -14,6 +14,8 @@ This repository contains:
 
 GAPS is not a replacement for BPMN, CMMN, DMN, OSCAL, NIST AI RMF, ISO/IEC 42001, or the EU AI Act. It is an exploratory Governed Autonomy profile that should align with those standards where they already own the underlying concept.
 
+GAPS v1.0.0 reference docs live at `docs/governed-autonomy/gaps/`.
+
 ## Website
 
 The public documentation front door is:
@@ -41,6 +43,12 @@ Run the v1 validators (incubation):
 ```bash
 python3 scripts/validate-catalogs.py
 python3 scripts/validate-gaps-v1.py gaps/examples/v1/minimal/ga-process.v1.yml
+```
+
+Round-trip the v1 pilot spec:
+
+```bash
+python3 scripts/gaps-round-trip.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml
 ```
 
 Generate a reviewable skill package from a GAPS process:

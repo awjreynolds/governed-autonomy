@@ -994,6 +994,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
+    sys.stderr.write(
+        "NOTE: scripts/generate-gaps-skill-package.py generates v0.1 skeletons. v1.0.0 is the active version — see scripts/generate-gaps-skill-package-v1.py.\n"
+    )
     args = parse_args(argv or sys.argv[1:])
     if args.adopt_output and not args.write:
         print("--adopt-output requires --write", file=sys.stderr)

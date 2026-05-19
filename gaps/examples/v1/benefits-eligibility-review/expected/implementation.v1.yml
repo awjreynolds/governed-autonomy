@@ -1,3 +1,14 @@
+evidenceModel:
+  - eligibility-request
+  - identity-attestation
+  - supporting-evidence
+  - assessment-draft
+  - assessment-approval
+  - escalation-decision
+  - time-limit-event
+gates:
+  - assessment_decision_gate
+  - escalated_review_gate
 controlPlaneActions:
   - plane: control_plane
     autonomyTier: human_only

@@ -301,6 +301,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
+    sys.stderr.write(
+        "NOTE: scripts/validate-gaps.py validates GAPS v0.1 specs. v1.0.0 is the active version — see scripts/validate-gaps-v1.py.\n"
+    )
     args = parse_args(argv or sys.argv[1:])
     schema = load_json(args.schema)
     paths = args.paths or discover_examples()

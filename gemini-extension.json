@@ -5,6 +5,8 @@
   "commands": [
     "/gaps:author",
     "/gaps:validate",
-    "/gaps:generate"
+    "/gaps:generate",
+    "/gaps:lift",
+    "/gaps:round-trip"
   ]
 }

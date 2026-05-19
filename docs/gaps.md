@@ -9,6 +9,8 @@ GAPS is the Governed Autonomy Process Specification profile. It describes how a 
 
 GAPS is exploratory. It is not a replacement for established standards.
 
+For the v1.0.0 format, catalogs, generator, and round-trip discipline, see the [GAPS v1.0.0 reference](governed-autonomy/gaps/).
+
 ## Relationship to existing standards
 
 Where existing standards already own a concept, GAPS should align with them rather than re-derive them:
@@ -35,6 +37,7 @@ The intended GAPS contribution is the Governed Autonomy profile layered over tha
 ## Repository files
 
 - [GAPS README](https://github.com/awjreynolds/governed-autonomy/blob/main/gaps/README.md)
+- [GAPS v1.0.0 reference](governed-autonomy/gaps/)
 - [Process schema](https://github.com/awjreynolds/governed-autonomy/blob/main/gaps/schema/ga-process.schema.json)
 - [Implementation-map schema](https://github.com/awjreynolds/governed-autonomy/blob/main/gaps/schema/implementation.schema.json)
 - [Reference examples](https://github.com/awjreynolds/governed-autonomy/tree/main/gaps/examples)

@@ -33,6 +33,9 @@ trap - EXIT
 echo "==> Checking GAPS v1 pilot generator output is up to date"
 python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --check
 
+echo "==> Round-tripping GAPS v1 pilot spec"
+python3 scripts/gaps-round-trip.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml
+
 echo "==> Running test suites"
 python3 -m unittest discover tests/gaps -v
 

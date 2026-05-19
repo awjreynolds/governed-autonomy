@@ -5,6 +5,14 @@ description: Use when the user says /gaps:validate, wants to validate GAPS proce
 
 # /gaps:validate
 
+## GAPS v1 (preferred)
+
+Validate v1 specs with `python3 scripts/validate-gaps-v1.py <spec>`. Use `--level descriptive|machine-validatable|generative` to override the spec-declared conformance for testing.
+
+Validate the catalogs themselves with `python3 scripts/validate-catalogs.py`.
+
+The v0.1 guidance below is retained for the deprecation window.
+
 Validate GAPS process specifications and implementation maps.
 
 This command is a standalone, agent-agnostic GAPS command. Follow this file directly; do not require any other installed skill.
