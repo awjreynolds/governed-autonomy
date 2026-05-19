@@ -1,0 +1,232 @@
+catalogId: evidence-kinds
+catalogVersion: v1
+description: >
+  Controlled vocabulary of evidence categories used in GAPS v1
+  `evidenceModel.caseFileItems[].kind`. Each kind has a default producer,
+  default retention, and default shape. Specs may tighten retention,
+  override producer, or extend the shape; specs may not loosen retention
+  without recording a rationale.
+
+evidenceKinds:
+  # ----------------------------- observation -----------------------------
+  - id: triage-observation
+    label: Triage observation
+    category: observation
+    defaultProducer: autonomous_system
+    defaultRetention: process-lifetime
+    definition: >
+      A structured read of incoming work that captures source, requested
+      outcome, sensitivity, and recommended routing.
+    defaultShape:
+      required: [source, requestedOutcome, observedAt]
+      optional: [sensitivity, recommendedRoute, classification]
+    examples:
+      - "intake summary for a new GADD Work Item"
+      - "incident triage observation for a paging event"
+
+  - id: context-observation
+    label: Context observation
+    category: observation
+    defaultProducer: autonomous_system
+    defaultRetention: process-lifetime
+    definition: >
+      A read of surrounding state (repository, external tracker, monitoring
+      data) gathered to support a downstream decision.
+    defaultShape:
+      required: [sources, observedAt]
+      optional: [highlights, gaps]
+
+  - id: external-state-snapshot
+    label: External state snapshot
+    category: observation
+    defaultProducer: autonomous_system
+    defaultRetention: process-lifetime
+    definition: >
+      A point-in-time read of an external system's relevant state.
+    defaultShape:
+      required: [system, snapshotAt, snapshot]
+
+  # ----------------------------- attestation -----------------------------
+  - id: human-attestation
+    label: Human attestation
+    category: attestation
+    defaultProducer: any
+    defaultRetention: regulatory
+    definition: >
+      A signed or otherwise non-repudiable statement by a named human role
+      that something is true or has been reviewed.
+    defaultShape:
+      required: [role, actorId, statement, attestedAt]
+
+  - id: approval-attestation
+    label: Approval attestation
+    category: attestation
+    defaultProducer: approver
+    defaultRetention: regulatory
+    definition: >
+      A specialized human-attestation for gate approvals. Carries the gate
+      id and the rule outcome.
+    defaultShape:
+      required: [role, actorId, gateId, decision, attestedAt]
+      optional: [conditions, rationale]
+
+  - id: dual-control-attestation
+    label: Dual-control attestation
+    category: attestation
+    defaultProducer: approver
+    defaultRetention: regulatory
+    definition: >
+      A composite attestation requiring two distinct human actors, used for
+      high-risk or irreversible actions.
+    defaultShape:
+      required: [primaryRole, primaryActorId, secondaryRole, secondaryActorId, statement, attestedAt]
+
+  # ------------------------------- finding --------------------------------
+  - id: verification-finding
+    label: Verification finding
+    category: finding
+    defaultProducer: reviewer
+    defaultRetention: process-lifetime
+    definition: >
+      A reviewer's structured finding from inspecting implementation
+      evidence, test output, or compliance checks.
+    defaultShape:
+      required: [reviewer, finding, severity]
+      optional: [recommendation, references]
+
+  - id: policy-violation-finding
+    label: Policy violation finding
+    category: finding
+    defaultProducer: reviewer
+    defaultRetention: regulatory
+    definition: >
+      A finding that an action or artifact violates a named policy.
+    defaultShape:
+      required: [policyId, violation, severity, foundAt]
+
+  - id: risk-finding
+    label: Risk finding
+    category: finding
+    defaultProducer: any
+    defaultRetention: process-lifetime
+    definition: >
+      Identification of a risk that may affect outcomes, evidence, or
+      authority boundaries.
+    defaultShape:
+      required: [riskSummary, likelihood, impact]
+      optional: [mitigationProposed]
+
+  # --------------------------- decision-record ----------------------------
+  - id: route-decision
+    label: Route decision
+    category: decision-record
+    defaultProducer: any
+    defaultRetention: process-lifetime
+    definition: >
+      The recorded decision of a triage route, including chosen route and
+      rationale.
+    defaultShape:
+      required: [chosenRoute, rationale, decidedAt]
+      optional: [alternativesConsidered]
+
+  - id: gate-decision
+    label: Gate decision
+    category: decision-record
+    defaultProducer: any
+    defaultRetention: regulatory
+    definition: >
+      The outcome of evaluating a gate's decision rules.
+    defaultShape:
+      required: [gateId, decision, decidedAt]
+      optional: [inputsObserved, ruleMatched]
+
+  - id: scope-decision
+    label: Scope decision
+    category: decision-record
+    defaultProducer: approver
+    defaultRetention: process-lifetime
+    definition: >
+      Decision establishing the scope boundary for downstream autonomous
+      execution.
+    defaultShape:
+      required: [scopeIncludes, scopeExcludes, decidedAt]
+
+  - id: design-decision
+    label: Design decision
+    category: decision-record
+    defaultProducer: technical_authority
+    defaultRetention: process-lifetime
+    definition: >
+      A technical design decision capturing tradeoffs and chosen approach.
+
+  # ----------------------------- artifact-ref -----------------------------
+  - id: artifact-reference
+    label: Artifact reference
+    category: artifact-ref
+    defaultProducer: any
+    defaultRetention: process-lifetime
+    definition: >
+      Reference to a produced artifact (PRD, SDD, plan, code diff, test
+      report) by path and content hash.
+    defaultShape:
+      required: [path]
+      optional: [contentHash, kind, producedAt]
+
+  - id: code-change-reference
+    label: Code change reference
+    category: artifact-ref
+    defaultProducer: operator
+    defaultRetention: process-lifetime
+    definition: >
+      Reference to a code change such as a commit, pull request, or change
+      set.
+    defaultShape:
+      required: [vcs, ref]
+      optional: [author, mergedAt]
+
+  # ----------------------------- audit-event ------------------------------
+  - id: state-transition-event
+    label: State transition event
+    category: audit-event
+    defaultProducer: any
+    defaultRetention: regulatory
+    definition: >
+      An auditable record of a canonical state transition.
+    defaultShape:
+      required: [fromState, toState, transitionId, transitionedAt]
+      optional: [triggeringEvidence]
+
+  - id: authority-invocation-event
+    label: Authority invocation event
+    category: audit-event
+    defaultProducer: any
+    defaultRetention: regulatory
+    definition: >
+      A record that a specific action was performed under a specific
+      authority (autonomy tier, role).
+    defaultShape:
+      required: [actionId, actorRole, autonomyTier, invokedAt]
+
+  # -------------------------- external-reference --------------------------
+  - id: external-ticket-reference
+    label: External tracker reference
+    category: external-reference
+    defaultProducer: any
+    defaultRetention: process-lifetime
+    definition: >
+      Reference to an external tracker item.
+    defaultShape:
+      required: [system, ticketId]
+      optional: [url, status]
+
+  - id: regulatory-record-reference
+    label: Regulatory record reference
+    category: external-reference
+    defaultProducer: any
+    defaultRetention: regulatory
+    definition: >
+      Reference to a record held in a regulated system of record
+      (procurement system, identity directory, financial system).
+    defaultShape:
+      required: [system, recordId]
+      optional: [recordType, retrievedAt]
