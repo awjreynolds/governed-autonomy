@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from gaps_v1_migrator.match import fuzzy_action_match  # noqa: E402
 from gaps_v1_migrator.render import render  # noqa: E402
+from gaps_v1_migrator.translate import translate  # noqa: E402
 
 
 CATALOG = [
@@ -74,6 +75,43 @@ class RendererTests(unittest.TestCase):
             "      - b\n"
             "    excludes: []\n",
         )
+
+
+class TranslatorTests(unittest.TestCase):
+    def test_translates_v0_lane_authority_and_unmatched_local_actions(self) -> None:
+        v0 = {
+            "process": {
+                "id": "demo-process",
+                "name": "Demo process",
+                "purpose": "Exercise migration.",
+                "scope": {"includes": ["included"], "excludes": ["excluded"]},
+            },
+            "roles": {"approver": {"label": "Approver"}},
+            "lanes": {
+                "draft_lane": {
+                    "purpose": "Draft a thing.",
+                    "authority": {
+                        "allowed": ["Draft a reviewable artifact", "make tea for reviewers"],
+                        "prohibited": ["approve its own work"],
+                    },
+                    "states": ["Open", "Closed"],
+                    "skills": ["demo-skill"],
+                }
+            },
+            "governedAutonomyRiskPatterns": {
+                "role_collapse": {"mitigation": "Separate producer and approver."},
+            },
+        }
+
+        migrated = translate(v0, CATALOG, ROOT / "gaps" / "examples" / "demo" / "ga-process.yml")
+
+        self.assertEqual(migrated["gapsVersion"], "1.0.0")
+        self.assertEqual(migrated["conformanceLevel"], "descriptive")
+        self.assertEqual(migrated["process"]["id"], "demo-process")
+        self.assertEqual(migrated["process"]["localActions"][0]["id"], "make-tea-for-reviewers")
+        self.assertEqual(migrated["lanes"][0]["authority"]["allowedActions"], ["draft-artifact"])
+        self.assertEqual(migrated["lanes"][0]["authority"]["prohibitedActions"], ["approve-own-work"])
+        self.assertEqual(migrated["riskPatterns"][0]["patternRef"], "role-collapse")
 
 
 if __name__ == "__main__":
