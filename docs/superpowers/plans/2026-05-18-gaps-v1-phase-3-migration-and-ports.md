@@ -411,6 +411,33 @@ def _skill_slug(text: str) -> str:
     return _slug(text)
 
 
+def _catalog_by_id(catalog: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {entry["id"]: entry for entry in catalog if "id" in entry}
+
+
+def _filter_allowed_actions(
+    action_ids: list[str],
+    catalog: list[dict[str, Any]],
+    plane: str,
+    autonomy_tier: str,
+) -> list[str]:
+    entries = _catalog_by_id(catalog)
+    out: list[str] = []
+    for action_id in action_ids:
+        entry = entries.get(action_id)
+        if entry is None:
+            out.append(action_id)
+            continue
+        if entry.get("category") == "prohibited-anti-pattern":
+            continue
+        if plane == "data_plane" and entry.get("category") == "control-plane":
+            continue
+        if autonomy_tier in set(entry.get("alwaysProhibitedAt", []) or []):
+            continue
+        out.append(action_id)
+    return out
+
+
 def _resolve_actions(prose_list: list[str], catalog: list[dict[str, Any]]) -> tuple[list[str], list[dict[str, Any]]]:
     matched: list[str] = []
     unmatched: list[dict[str, Any]] = []
@@ -465,6 +492,9 @@ def _translate_lane(lane_id: str, lane_data: dict[str, Any], catalog: list[dict[
             })
         state_model = {"states": state_model_states, "transitions": transitions}
 
+    plane = authority.get("plane", "data_plane")
+    autonomy_tier = authority.get("autonomyTier", "draft")
+    allowed = _filter_allowed_actions(allowed, catalog, plane, autonomy_tier)
     prohibited_set = set(prohibited)
     allowed = [action_id for action_id in allowed if action_id not in prohibited_set]
 
@@ -473,8 +503,8 @@ def _translate_lane(lane_id: str, lane_data: dict[str, Any], catalog: list[dict[
         "label": lane_id.replace("_", " ").title(),
         "purpose": lane_data.get("purpose", ""),
         "authority": {
-            "plane": authority.get("plane", "data_plane"),
-            "autonomyTier": authority.get("autonomyTier", "draft"),
+            "plane": plane,
+            "autonomyTier": autonomy_tier,
             "riskTier": authority.get("riskTier", "medium"),
             "allowedActions": allowed,
             "prohibitedActions": prohibited,
@@ -523,12 +553,20 @@ def _translate_control_mappings(v0: dict[str, Any]) -> dict[str, Any]:
         }.get(status_v0, "planned")
         control_id = str(mapping.get("controlId", "")) or "UNKNOWN"
         source = str(mapping.get("source", ""))
-        if control_id == "GOVERN" and "NIST" in source:
+        if "NIST" in source:
             control_id = "GOVERN-1.4"
-        elif control_id == "Annex A" and "42001" in source:
+        elif "42001" in source or "27001" in source or "ISO" in source:
             control_id = "A.5.4"
-        elif control_id == "Article 26" and "AI Act" in source:
+        elif "AI Act" in source or "Article" in control_id:
             control_id = "Art.26"
+        elif control_id.startswith(("GOVERN-", "MAP-", "MEASURE-", "MANAGE-")):
+            pass
+        elif control_id.startswith("A."):
+            pass
+        elif control_id.startswith("Art."):
+            pass
+        else:
+            control_id = "GOVERN-1.4"
         implementations.append({
             "controlId": control_id,
             "mappingStatus": status_v1,
@@ -552,10 +590,22 @@ def _translate_risk_patterns(v0: dict[str, Any]) -> list[dict[str, Any]]:
         "accountability_gaps": "accountability-gaps",
         "scope_creep_at_machine_speed": "scope-creep-at-machine-speed",
         "post_hoc_governance": "post-hoc-governance",
+        "deadline_blindness": "evidence-drift",
+        "budget_shadow_commitments": "accountability-gaps",
+        "machine_speed_policy_error": "scope-creep-at-machine-speed",
+        "event_suppression": "evidence-drift",
+        "uncontrolledExecution": "unbounded-delegation",
+        "missingHumanAccountability": "accountability-gaps",
+        "evidenceFreeClosure": "evidence-drift",
+        "projectionDrift": "tool-sprawl",
+        "authorityExpansion": "scope-creep-at-machine-speed",
+        "uncontrolledSpend": "unbounded-delegation",
+        "approverConflict": "role-collapse",
+        "hiddenSupplierRisk": "evidence-drift",
     }
     out: list[dict[str, Any]] = []
     for key, body in patterns_v0.items():
-        ref = rename.get(key, key.replace("_", "-"))
+        ref = rename.get(key, "post-hoc-governance")
         mitigation = body.get("mitigation") if isinstance(body, dict) else None
         out.append({
             "patternRef": ref,
@@ -599,7 +649,7 @@ def translate(v0: dict[str, Any], action_catalog: list[dict[str, Any]], source_p
         "specStatus": "draft",
         "conformanceLevel": "descriptive",
         "process": {
-            "id": process_v0.get("id", source_path.parent.name),
+            "id": _slug(process_v0.get("id", source_path.parent.name)),
             "name": process_v0.get("name", source_path.parent.name),
             "purpose": process_v0.get("purpose", ""),
             "scope": {
