@@ -177,8 +177,12 @@ Conventions:
 - **Namespaced refs everywhere** — `catalog:…`, `local:…`, `role:…`, `step:…`, `lane:…`, `evidence:…`. Every internal reference uses a prefix. No bare ids inside the file.
 - **`local_definitions` is top-level** — `local:` refs may appear anywhere in the file (actions, evidence, escalation conditions). Every `local:` ref must have an entry in the top-level `local_definitions` map of at least 20 characters.
 - **`steps[*].requires_role` is required** — every step names the role responsible for executing it. For agent-executable steps, this is the autonomous agent role (`role:agent`). For human steps, a human role. This field makes ownership deterministic and powers `W009`.
+- **What `authority.allowed_actions` means vs `authority.prohibited_actions`**:
+  - `authority.prohibited_actions` is the **hard ceiling**. No step can do anything in this set. Step-level prohibitions are additive and non-removable. This is the load-bearing safety constraint that makes the governance model actually safe.
+  - `authority.allowed_actions` is the **default affirmative list** for steps that don't override. It is not a process-wide authority boundary. Steps may declare entirely different allowed actions (an investigate step that does only reads, when the process default is draft-write). There is no process-wide "total authority" concept — authority is per-step, scoped by each step's effective allowed set minus the inherited prohibitions.
+  - Practical consequence: `authority.allowed_actions` at process level says "this is what most steps do by default," not "this is the maximum permitted across the whole process." Authors who want a hard maximum must express it as prohibitions.
 - **Step authority merge semantics**:
-  - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Steps may set an allowed action that is not in the process default (e.g., an investigate step may use `data-plane-read` actions the process default doesn't list). Rationale: process `allowed_actions` is the default *list*, not a hard ceiling; the load-bearing safety constraint is `prohibited_actions`, not `allowed_actions`.
+  - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Steps may set an allowed action that is not in the process default.
   - `authority_overrides.prohibited_actions` is **unioned** with the process-level prohibitions. Step-level prohibited additions are allowed; step-level *removals* of inherited prohibitions are not. Rationale: prohibitions are safety constraints — a step cannot weaken them. This is the actual mechanism that keeps step-level discretion bounded.
   - `authority_overrides.autonomy_tier`, when present, **replaces** the process default for that step.
   - `authority_overrides.justification`, when present, is a free-text string explaining why this step deviates from the process default. Required by `W005` whenever the step's autonomy tier is more permissive than the process default.
@@ -333,12 +337,12 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `E003a` catalog-ref-missing | A `catalog:` ref does not exist in the referenced catalog |
 | `E003b` local-ref-undefined | A `local:` ref has no entry in `local_definitions` or its definition is under 20 chars |
 | `E003c` internal-ref-missing | A `role:`/`step:`/`lane:`/`evidence:` ref does not exist in the file |
-| `E004` self-approval | For any gate, `gate.requires_role` must not equal `requires_role` of any step that produces an evidence item the gate requires. Catches the classic anti-pattern of the same role both executing the work and approving it. Implementable now that `steps[*].requires_role` exists. |
+| `E004` self-approval | For any gate, `gate.requires_role` must not equal `requires_role` of any step that (a) produces an evidence item the gate requires AND (b) has `step_kind: execute`. Catches the anti-pattern of the same role both executing the work product and approving it. Reviewer/approver workflows where a reviewer produces a verification finding and then approves are explicitly allowed — those producing steps are `investigate` or `monitor`, not `execute`. |
 | `E005` action-conflict | Same action in both `allowed_actions` and `prohibited_actions` after step-override merge |
 | `E006` step-without-skill | A `steps[*].id` has no matching `skills/<step-id>/SKILL.md` |
 | `E007` skill-without-step | A `skills/<id>/SKILL.md` has no matching entry in `steps` |
 | `E008` frontmatter-mismatch | A `SKILL.md` `governance.step` doesn't resolve, or `governance.process` path doesn't resolve to this file |
-| `E009` agent-accountable | A role with `autonomous: true` has non-empty `accountable_for` (operating model: agents do not own accountability) |
+| `E009` agent-accountable | A role with `autonomous: true` has `accountable_for` set to a value that is not empty and not the sentinel `nothing`. The sentinel `nothing` is the explicit "this role owns no accountability" marker and is the recommended value for autonomous roles. (Operating model: agents do not own accountability.) |
 | `E010` dead-gate | A gate requires evidence that no step produces |
 | `E011` investigate-with-write | A `step_kind: investigate` step's effective allowed actions (after merge) include any catalog action whose `category` is not `data-plane-read`. The `meta` category is **not** whitelisted because it includes mutating actions (`record-known-gap`, `archive-closed-work`, etc.). If an investigation must ask a human, split it into a read-only investigate step followed by a separate escalate/ask step. |
 | `E012` step-role-missing | Every entry in `steps[*]` has a `requires_role` field whose value resolves to a defined role. There is no inheritance — each step names its responsible role explicitly. |
@@ -352,7 +356,6 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `W003` evidence-without-consumer | An evidence item has no `consumer` |
 | `W004` step-purpose-missing | A step's `purpose` is missing or under 20 chars |
 | `W005` autonomy-mismatch | Step `authority_overrides.autonomy_tier` is more permissive than the process default (per the autonomy lattice) AND `authority_overrides.justification` is missing or under 20 characters. Authors can suppress the warning by either tightening the override or supplying a real justification. |
-| `W006` local-without-rationale | A `local:` ref's definition is under 20 chars |
 | `W007` orphan-gate | A gate references no steps in `blocks_steps` |
 | `W008` projection-as-canonical | A value in `state.projections` also appears as `state.canonical` |
 | `W009` human-only-without-owner | A step with effective `autonomy_tier: human_only` has `requires_role` set to a role flagged `autonomous: true`, or has no `requires_role` at all. (A human-only step must name a non-autonomous role as its executor.) |
@@ -366,8 +369,8 @@ governance.yml: E002 accountable-role-absent
   No role has a non-empty accountable_for.
   Operating model section 1 requires an accountable human owner.
 
-governance.yml: W006 local-without-rationale
-  3 of 12 local refs have under-specified definitions.
+governance.yml: W002 blast-radius-undefined
+  risk.blast_radius is missing.
 
 1 error, 1 warning
 exit 1
