@@ -114,5 +114,72 @@ class TranslatorTests(unittest.TestCase):
         self.assertEqual(migrated["riskPatterns"][0]["patternRef"], "role-collapse")
 
 
+class MigratorEndToEndTests(unittest.TestCase):
+    def test_migrate_gadd_v0_to_v1_validates_descriptive(self) -> None:
+        import subprocess
+        import tempfile
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"),
+                str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"),
+                "--stdout",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".v1.yml", dir=ROOT, delete=False) as handle:
+            handle.write(result.stdout)
+            migrated = Path(handle.name)
+        try:
+            validate = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate-gaps-v1.py"), str(migrated)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(validate.returncode, 0, validate.stderr + validate.stdout)
+        finally:
+            migrated.unlink(missing_ok=True)
+
+    def test_migrate_deterministic(self) -> None:
+        import subprocess
+
+        first = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"),
+                str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"),
+                "--stdout",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        second = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"),
+                str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"),
+                "--stdout",
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        def normalize(text: str) -> str:
+            return "\n".join(line for line in text.splitlines() if "reviewedAt" not in line)
+
+        self.assertEqual(normalize(first.stdout), normalize(second.stdout))
+
+
 if __name__ == "__main__":
     unittest.main()

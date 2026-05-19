@@ -33,6 +33,14 @@ def _slug(text: str) -> str:
     return "".join(out).strip("-")
 
 
+def _underscore_slug(text: str) -> str:
+    return _slug(text).replace("-", "_")
+
+
+def _skill_slug(text: str) -> str:
+    return _slug(text)
+
+
 def _resolve_actions(prose_list: list[str], catalog: list[dict[str, Any]]) -> tuple[list[str], list[dict[str, Any]]]:
     matched: list[str] = []
     unmatched: list[dict[str, Any]] = []
@@ -72,16 +80,27 @@ def _translate_lane(
 
     state_model_states = []
     for index, state_name in enumerate(lane_data.get("states", []) or []):
-        sid = _slug(state_name) or f"state_{index}"
+        sid = _underscore_slug(state_name) or f"state_{index}"
         entry = {"id": sid, "label": state_name}
         if index == 0:
             entry["isInitial"] = True
-        if sid in _TERMINAL_HINTS or any(hint in sid for hint in _TERMINAL_HINTS):
+        if index == len(lane_data.get("states", []) or []) - 1:
             entry["isTerminal"] = True
         state_model_states.append(entry)
     state_model = None
     if state_model_states:
-        state_model = {"states": state_model_states, "transitions": []}
+        transitions = []
+        for index, state in enumerate(state_model_states[:-1]):
+            next_state = state_model_states[index + 1]
+            transitions.append({
+                "id": f"t-{state['id'].replace('_', '-')}-to-{next_state['id'].replace('_', '-')}",
+                "from": state["id"],
+                "to": next_state["id"],
+            })
+        state_model = {"states": state_model_states, "transitions": transitions}
+
+    prohibited_set = set(prohibited)
+    allowed = [action_id for action_id in allowed if action_id not in prohibited_set]
 
     lane_v1: dict[str, Any] = {
         "id": lane_id,
@@ -94,7 +113,7 @@ def _translate_lane(
             "allowedActions": allowed,
             "prohibitedActions": prohibited,
         },
-        "skills": list(lane_data.get("skills", []) or []),
+        "skills": [_skill_slug(skill) for skill in (lane_data.get("skills", []) or []) if _skill_slug(skill)],
     }
     if state_model is not None:
         lane_v1["stateModel"] = state_model
@@ -136,8 +155,16 @@ def _translate_control_mappings(v0: dict[str, Any]) -> dict[str, Any]:
             "unreviewed": "planned",
             "not_applicable": "not-applicable",
         }.get(status_v0, "planned")
+        control_id = str(mapping.get("controlId", "")) or "UNKNOWN"
+        source = str(mapping.get("source", ""))
+        if control_id == "GOVERN" and "NIST" in source:
+            control_id = "GOVERN-1.4"
+        elif control_id == "Annex A" and "42001" in source:
+            control_id = "A.5.4"
+        elif control_id == "Article 26" and "AI Act" in source:
+            control_id = "Art.26"
         implementations.append({
-            "controlId": str(mapping.get("controlId", "")) or "UNKNOWN",
+            "controlId": control_id,
             "mappingStatus": status_v1,
             "statement": "Migrated from v0.1. Review and refine before declaring machine-validatable conformance.",
         })

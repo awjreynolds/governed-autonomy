@@ -99,7 +99,13 @@ def render(data: Any, indent: int = 0) -> str:
                             lines.append(" " * (indent + 2) + "- " + first)
                             lines.extend(rendered[1:])
                         else:
-                            lines.append(" " * (indent + 2) + "- " + _scalar(item))
+                            rendered_scalar = _scalar(item)
+                            if rendered_scalar.startswith(">\n") and isinstance(item, str):
+                                lines.append(" " * (indent + 2) + "- >")
+                                body = "\n".join(" " * (indent + 4) + line.strip() for line in item.rstrip().splitlines())
+                                lines.append(body)
+                            else:
+                                lines.append(" " * (indent + 2) + "- " + rendered_scalar)
             else:
                 rendered_scalar = _scalar(value)
                 if rendered_scalar.startswith(">\n"):
