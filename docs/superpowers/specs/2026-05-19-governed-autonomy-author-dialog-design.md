@@ -20,7 +20,7 @@ The design target: a practitioner walks an interrogative dialog grounded in the 
 6. **Catalogs feed the dialog as suggestions and hints** — both catalog ids and novel local entries are valid in `governance.yml`. Vocabulary is not enforced.
 7. **Grill-me stance, default-on** — every phase is a small loop (ask → probe → cross-check → accept). `--quick` flag escapes probing for revision and trivial processes.
 8. **Quality refusal in addition to mechanical refusal** — a populated field that doesn't survive probing fails the same as an empty field. Quality refusal blocks emit only when the contradiction touches a core field; non-core contradictions are recorded and proceed.
-9. **Help-and-research integration** — when the user is stuck, the dialog offers brainstorm-style options, local research (read repo / docs), or external research (Exa web search). User can always type the answer to skip the offer.
+9. **Help-and-research integration** — when the user is stuck, the dialog offers brainstorm-style options, local research (read repo / docs), or external research via whatever web search the host agent has available (provider-agnostic). User can always type the answer to skip the offer.
 10. **Investigation/research as a first-class step type** — `step_kind: investigate` is recognised; investigation steps are read-only by definition and feed a downstream decision step.
 11. **GAPS v1 schema is internal** — kept for `--emit-spec` users (audit / compliance use case). Hand-authoring GAPS YAML stops being the supported authoring path.
 
@@ -92,9 +92,10 @@ authority:
     - catalog:action:approve-own-work
     - catalog:action:expand-scope-silently
     - local:merge-to-main
-  local_definitions:
-    open-pr: Open a pull request against the integration branch with the drafted change set.
-    merge-to-main: Push or merge any commit onto the main branch directly without an approved gate.
+
+local_definitions:
+  open-pr: Open a pull request against the integration branch with the drafted change set.
+  merge-to-main: Push or merge any commit onto the main branch directly without an approved gate.
 
 input_gates:
   - A linked spec or ticket exists.
@@ -143,10 +144,12 @@ steps:
     label: Design
     purpose: Produce a design record describing the change and its reversibility.
     step_kind: execute
+    requires_role: role:agent
   - id: investigate-risk
     label: Investigate risk
     purpose: Read code paths and external dependencies to identify reversibility constraints.
     step_kind: investigate
+    requires_role: role:agent
     authority_overrides:
       allowed_actions:
         - catalog:action:gather-context
@@ -156,10 +159,12 @@ steps:
     label: Implement
     purpose: Draft the code change and run verification.
     step_kind: execute
+    requires_role: role:agent
   - id: merge
     label: Merge
     purpose: Merge to integration branch after pre-merge gate passes.
     step_kind: approve
+    requires_role: role:tech_lead
     authority_overrides:
       autonomy_tier: human_only
 
@@ -170,8 +175,14 @@ knownGaps: []
 Conventions:
 
 - **Namespaced refs everywhere** — `catalog:…`, `local:…`, `role:…`, `step:…`, `lane:…`, `evidence:…`. Every internal reference uses a prefix. No bare ids inside the file.
-- **`local_definitions` required for `local:` refs** — every local term must have an inline definition of at least 20 characters.
-- **Step-level action overrides** — `steps[*].authority_overrides` may set `autonomy_tier`, `allowed_actions`, `prohibited_actions`. Step authority is `process default ⊕ step override` (override wins on conflict).
+- **`local_definitions` is top-level** — `local:` refs may appear anywhere in the file (actions, evidence, escalation conditions). Every `local:` ref must have an entry in the top-level `local_definitions` map of at least 20 characters.
+- **`steps[*].requires_role` is required** — every step names the role responsible for executing it. For agent-executable steps, this is the autonomous agent role (`role:agent`). For human steps, a human role. This field makes ownership deterministic and powers `W009`.
+- **Step authority merge semantics**:
+  - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Step inherits process allowed only when the step omits this field. Rationale: steps can only *narrow* what they are allowed to do; inheriting and then adding silently is too easy to get wrong.
+  - `authority_overrides.prohibited_actions` is **unioned** with the process-level prohibitions. Step-level prohibited additions are allowed; step-level *removals* of inherited prohibitions are not. Rationale: prohibitions are safety constraints — a step cannot weaken them.
+  - `authority_overrides.autonomy_tier`, when present, **replaces** the process default for that step.
+  - **Effective allowed** = step allowed (if set) else process allowed. **Effective prohibited** = process prohibited ∪ step prohibited.
+  - `E005` fires when any action appears in both effective allowed and effective prohibited.
 - **Autonomy tier lattice** (least to most permissive): `human_only < assist < recommend < draft < execute_with_approval < execute_within_limits < autonomous_with_monitoring`. Used by `W005` to detect step-level escalation of autonomy.
 - **One file per process** — process-level decisions belong together; splitting per-step creates drift.
 - **`warnings:` and `knownGaps:` persisted by the author skill**, not by lint. Lint produces output; author reads lint output and writes warnings into the file. Lint itself is pure read.
@@ -328,7 +339,7 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `E008` frontmatter-mismatch | A `SKILL.md` `governance.step` doesn't resolve, or `governance.process` path doesn't resolve to this file |
 | `E009` agent-accountable | A role with `autonomous: true` has non-empty `accountable_for` (operating model: agents do not own accountability) |
 | `E010` dead-gate | A gate requires evidence that no step produces |
-| `E011` investigate-with-write | A `step_kind: investigate` step (after merging process-level and step-level authority) lists any action whose catalog `category` is not `data-plane-read`, `meta`, or read-only |
+| `E011` investigate-with-write | A `step_kind: investigate` step's effective allowed actions (after merge) include any catalog action whose `category` is not `data-plane-read`. The `meta` category is **not** whitelisted because it includes mutating actions (`record-known-gap`, `archive-closed-work`, etc.). If an investigation must ask a human, split it into a read-only investigate step followed by a separate escalate/ask step. |
 
 ### Warnings
 
@@ -342,7 +353,7 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `W006` local-without-rationale | A `local:` ref's definition is under 20 chars |
 | `W007` orphan-gate | A gate references no steps in `blocks_steps` |
 | `W008` projection-as-canonical | A value in `state.projections` also appears as `state.canonical` |
-| `W009` human-only-without-owner | A `human_only` step has no named human role |
+| `W009` human-only-without-owner | A step with effective `autonomy_tier: human_only` has `requires_role` set to a role flagged `autonomous: true`, or has no `requires_role` at all. (A human-only step must name a non-autonomous role as its executor.) |
 | `W010` escalation-condition-undefined | An escalation entry has an empty or `unknown` condition |
 
 ### Behavior
@@ -433,7 +444,7 @@ Acceptance criteria before deleting anything:
 - **Author skill cold-start fixture**: one new process is authored end-to-end from cold start; the resulting `governance.yml` passes `ga-lint` with zero errors; phase exemplar acceptance tests (accept-exemplar accepted, reject-exemplar refused) pass for every phase.
 - **Author skill retrofit fixture**: an existing GADD skill is retrofitted; the dialog reads it, produces a `governance.yml`, and the merged process passes `ga-lint`.
 - **Phase exemplar tests**: every phase's accept-exemplar produces accept; every reject-exemplar produces quality refusal.
-- **`ga-lint` performance**: under 1 second on all generated artifacts and on `gaps/examples/v1/*` directories.
+- **`ga-lint` performance**: under 1 second on every `governance.yml` produced by the new flow (the cold-start fixture, the retrofit fixture, and the three golden-critique target processes). `ga-lint` reads `governance.yml`, not `ga-process.v1.yml`, so legacy GAPS example directories are out of scope for the lint acceptance target.
 
 ### Stage 3 — Delete
 
