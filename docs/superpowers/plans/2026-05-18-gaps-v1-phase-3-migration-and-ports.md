@@ -137,8 +137,20 @@ _STOPWORDS = {
 }
 
 
+def _normalize_token(token: str) -> str:
+    if len(token) > 4 and token.endswith("ies"):
+        return token[:-3] + "y"
+    if len(token) > 3 and token.endswith("s"):
+        return token[:-1]
+    return token
+
+
 def _tokenize(text: str) -> set[str]:
-    return {token for token in re.findall(r"[a-z0-9]+", text.lower()) if token and token not in _STOPWORDS}
+    return {
+        _normalize_token(token)
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if token and token not in _STOPWORDS
+    }
 
 
 def fuzzy_action_match(prose: str, catalog: list[dict[str, Any]]) -> tuple[Optional[str], float]:
