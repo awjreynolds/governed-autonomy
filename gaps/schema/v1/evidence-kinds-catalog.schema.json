@@ -25,7 +25,7 @@
           },
           "defaultProducer": {
             "type": "string",
-            "enum": ["operator", "reviewer", "approver", "autonomous_system", "external", "any"]
+            "enum": ["operator", "reviewer", "approver", "technical_authority", "autonomous_system", "external", "any"]
           },
           "defaultRetention": {
             "type": "string",
