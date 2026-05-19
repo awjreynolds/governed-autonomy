@@ -6,7 +6,7 @@
 
 **Architecture:** v1 lives alongside v0.1. The three GAPS-native catalogs are YAML under `gaps/catalogs/v1/`. Catalog meta-schemas and the v1 ga-process schema are JSON under `gaps/schema/v1/`. `scripts/validate-catalogs.py` validates each catalog against its meta-schema and runs cross-catalog semantic checks. `scripts/validate-gaps-v1.py` validates a v1 spec structurally; semantic cross-reference checks land in Phase 2. v0.1 tooling is untouched. The OSCAL catalog meta-schema and OSCAL JSON files are intentionally absent — Phase 1b adds them and extends the catalog validator.
 
-**Tech Stack:** Python 3 stdlib only (no PyYAML, no jsonschema package — use the existing Ruby YAML→JSON bridge from `scripts/validate-gaps.py` and a hand-rolled JSON Schema 2020-12 subset evaluator already proven in v0.1 validators).
+**Tech Stack:** Python 3 stdlib only (no PyYAML, no jsonschema package — use the existing Ruby YAML→JSON bridge from `scripts/retired GAPS v0 validator` and a hand-rolled JSON Schema 2020-12 subset evaluator already proven in v0.1 validators).
 
 ---
 
@@ -2309,10 +2309,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> Validating GAPS v0.1 reference specs"
-python3 scripts/validate-gaps.py
+python3 scripts/retired GAPS v0 validator
 
 echo "==> Validating GAPS v0.1 GADD implementation map"
-python3 scripts/validate-gaps-implementation.py
+python3 scripts/retired implementation validator
 
 echo "==> Validating GAPS v1 catalogs"
 python3 scripts/validate-catalogs.py
@@ -2365,7 +2365,7 @@ for the full architecture.
 
 - [ ] **Step 5: Update `README.md` quickstart**
 
-Add a v1 line to the existing `## Quick start` section, after the existing `python3 scripts/validate-gaps.py` block:
+Add a v1 line to the existing `## Quick start` section, after the existing `python3 scripts/retired GAPS v0 validator` block:
 
 ```markdown
 Run the v1 validators (incubation):

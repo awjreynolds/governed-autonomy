@@ -56,7 +56,7 @@ Validates whether the operating-model question set produces useful findings on r
 
 **Files to create:**
 - `skills/governed-autonomy-critique/SKILL.md` — single file, sections covering: input shapes (single skill / skill set / process dir / no-governance dir), operating-model concerns 1–9 as the review structure, findings taxonomy (blocking/significant/advisory), `ga-lint` baseline integration, output (only `governance-review.md` in target dir, no edits to reviewed artifact), citation requirement
-- `skills/governed-autonomy-critique/agents/openai.yaml` — 8-line interface + policy, modeled on `skills/gaps-author/agents/openai.yaml`
+- `skills/governed-autonomy-critique/agents/openai.yaml` — 8-line interface + policy, modeled on `skills/retired GAPS author/agents/openai.yaml`
 - `commands/governed-autonomy/critique.md` — router stub mirroring `commands/gaps/author.md`
 - `commands/governed-autonomy/critique.toml` — `description` + `prompt` with `{{args}}` mirroring `commands/gaps/author.toml`
 - `docs/governed-autonomy/critique.md`
@@ -119,16 +119,16 @@ Critique has now validated the question set. Author is critique-in-reverse.
 Pure removal. The full delete list is in the spec's Stage 3 section; key paths:
 
 **Skills (delete entire directories):**
-- `skills/gaps-author/`, `skills/gaps-validate/`, `skills/gaps-generate/`, `skills/gaps-lift/`, `skills/gaps-round-trip/`
+- `skills/retired GAPS author/`, `skills/retired GAPS validate/`, `skills/retired GAPS generate/`, `skills/retired GAPS lift/`, `skills/retired GAPS round trip/`
 
 **Commands (delete entire directory):**
 - `commands/gaps/` (5 `.md` + 5 `.toml`)
 
 **Scripts:**
-- `scripts/gaps-lift.py`, `gaps-round-trip.py`, `migrate-gaps-v0-to-v1.py`
-- `scripts/generate-gaps-skill-package.py`, `generate-gaps-skill-package-v1.py`
-- `scripts/validate-gaps.py`, `validate-gaps-implementation.py`
-- `scripts/gaps_v1_lift/`, `scripts/gaps_v1_migrator/`, `scripts/gaps_v1_generator/` (entire packages)
+- `scripts/retired GAPS lift script`, `retired GAPS round trip script`, `retired v0-to-v1 migration tool`
+- `scripts/retired GAPS package builder`, `retired GAPS v1 package builder`
+- `scripts/retired GAPS v0 validator`, `retired implementation validator`
+- `scripts/retired v1 lift package/`, `scripts/retired v1 migrator package/`, `scripts/retired v1 generator package/` (entire packages)
 
 **Keep (the `--emit-spec` plumbing):** `scripts/gaps_v1_validator/`, `scripts/validate-gaps-v1.py`, `gaps/schema/v1/`, `gaps/catalogs/v1/`
 
@@ -150,7 +150,7 @@ Pure removal. The full delete list is in the spec's Stage 3 section; key paths:
 **Acceptance gate:**
 - Full test suite green
 - `python3 scripts/validate-gaps-v1.py gaps/examples/v1/gadd/ga-process.v1.yml` passes
-- `git grep -l "gaps-author\|gaps-validate\|gaps-generate\|gaps-lift\|gaps-round-trip\|gaps-lift\.py\|gaps-round-trip\.py\|generate-gaps-skill-package\|validate-gaps\.py\|validate-gaps-implementation\|gaps_v1_lift\|gaps_v1_migrator\|gaps_v1_generator\|migrate-gaps-v0-to-v1"` returns nothing — no dangling references
+- `git grep -l "retired GAPS author\|retired GAPS validate\|retired GAPS generate\|retired GAPS lift\|retired GAPS round trip\|retired GAPS lift\.py\|retired GAPS round trip\.py\|retired GAPS package builder\|validate-gaps\.py\|retired implementation validator\|retired v1 lift package\|retired v1 migrator package\|retired v1 generator package\|retired v0-to-v1 migration tool"` returns nothing — no dangling references
 
 ### Phase 5 — Maintenance posture and walkthrough
 
@@ -209,7 +209,7 @@ python3 -m unittest discover tests/
 python3 scripts/validate-gaps-v1.py gaps/examples/v1/gadd/ga-process.v1.yml
 
 # No dangling references to deleted modules
-git grep -l "gaps-lift\|gaps-round-trip\|generate-gaps-skill-package\|gaps_v1_lift\|gaps_v1_migrator\|gaps_v1_generator\|migrate-gaps-v0-to-v1"
+git grep -l "retired GAPS lift\|retired GAPS round trip\|retired GAPS package builder\|retired v1 lift package\|retired v1 migrator package\|retired v1 generator package\|retired v0-to-v1 migration tool"
 
 # Manual walkthrough of cold-start dialog on a real process
 # (See Phase 5)

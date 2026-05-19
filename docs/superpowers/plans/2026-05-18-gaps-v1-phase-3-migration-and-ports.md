@@ -4,7 +4,7 @@
 
 **Goal:** Ship a one-shot migrator from GAPS v0.1 specs to v1 (`descriptive` conformance), port the four existing v0.1 reference specs to v1, and add a fresh `benefits-eligibility-review` casework reference spec authored at `machine-validatable` conformance to stress-test the format on a non-software process.
 
-**Architecture:** `scripts/migrate-gaps-v0-to-v1.py` reads a v0.1 spec, builds a best-effort v1 document, and writes it next to the source. The migrator is deterministic: same input always produces same output. Free-text `allowed`/`prohibited` strings are fuzzy-matched against the v1 action catalog (token-set overlap, case-insensitive); unmatched values become `process.localActions[]` entries with a TODO marker. Free-text `approvalCondition`/`escalationCondition` are preserved verbatim — sufficient for `descriptive` conformance, insufficient for `machine-validatable`. Migration output always declares `conformanceLevel: descriptive`. Reference spec ports run the migrator, then have minor hand-edits to set realistic `roles[].accountabilityScope` text and `evidenceModel.caseFileItems[]` derived from each v0.1 spec's structure. The casework spec is authored fresh in v1, not migrated.
+**Architecture:** `scripts/retired v0-to-v1 migration tool` reads a v0.1 spec, builds a best-effort v1 document, and writes it next to the source. The migrator is deterministic: same input always produces same output. Free-text `allowed`/`prohibited` strings are fuzzy-matched against the v1 action catalog (token-set overlap, case-insensitive); unmatched values become `process.localActions[]` entries with a TODO marker. Free-text `approvalCondition`/`escalationCondition` are preserved verbatim — sufficient for `descriptive` conformance, insufficient for `machine-validatable`. Migration output always declares `conformanceLevel: descriptive`. Reference spec ports run the migrator, then have minor hand-edits to set realistic `roles[].accountabilityScope` text and `evidenceModel.caseFileItems[]` derived from each v0.1 spec's structure. The casework spec is authored fresh in v1, not migrated.
 
 **Tech Stack:** Python 3 stdlib, Ruby YAML→JSON bridge, the v1 schema and validator from Phases 1 and 2.
 
@@ -13,11 +13,11 @@
 ## File Structure
 
 **New files:**
-- `scripts/migrate-gaps-v0-to-v1.py`
-- `scripts/gaps_v1_migrator/__init__.py`
-- `scripts/gaps_v1_migrator/match.py` — fuzzy action matcher
-- `scripts/gaps_v1_migrator/render.py` — v1 YAML renderer (deterministic key order)
-- `scripts/gaps_v1_migrator/translate.py` — v0.1 → v1 translation
+- `scripts/retired v0-to-v1 migration tool`
+- `scripts/retired v1 migrator package/__init__.py`
+- `scripts/retired v1 migrator package/match.py` — fuzzy action matcher
+- `scripts/retired v1 migrator package/render.py` — v1 YAML renderer (deterministic key order)
+- `scripts/retired v1 migrator package/translate.py` — v0.1 → v1 translation
 - `tests/gaps/v1/test_migrate.py`
 - `gaps/examples/v1/gadd/ga-process.v1.yml`
 - `gaps/examples/v1/compliance-review/ga-process.v1.yml`
@@ -34,15 +34,15 @@
 ### Task 1: Migrator scaffold and fuzzy action matcher
 
 **Files:**
-- Create: `scripts/gaps_v1_migrator/__init__.py`
-- Create: `scripts/gaps_v1_migrator/match.py`
+- Create: `scripts/retired v1 migrator package/__init__.py`
+- Create: `scripts/retired v1 migrator package/match.py`
 - Create: `tests/gaps/v1/test_migrate.py` (initial — matcher tests only)
 
 - [ ] **Step 1: Create the package skeleton**
 
 ```bash
-mkdir -p scripts/gaps_v1_migrator
-touch scripts/gaps_v1_migrator/__init__.py
+mkdir -p scripts/retired v1 migrator package
+touch scripts/retired v1 migrator package/__init__.py
 ```
 
 - [ ] **Step 2: Write the matcher tests first**
@@ -62,7 +62,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from gaps_v1_migrator.match import fuzzy_action_match  # noqa: E402
+from retired v1 migrator package.match import fuzzy_action_match  # noqa: E402
 
 
 CATALOG = [
@@ -112,11 +112,11 @@ if __name__ == "__main__":
 python3 -m unittest tests.gaps.v1.test_migrate -v
 ```
 
-Expected: ImportError because `scripts/gaps_v1_migrator/match.py` doesn't exist yet.
+Expected: ImportError because `scripts/retired v1 migrator package/match.py` doesn't exist yet.
 
 - [ ] **Step 4: Implement the matcher**
 
-Create `scripts/gaps_v1_migrator/match.py`:
+Create `scripts/retired v1 migrator package/match.py`:
 
 ```python
 """Fuzzy match of v0.1 free-text action prose to v1 action catalog ids."""
@@ -198,7 +198,7 @@ Expected: six matcher tests PASS.
 - [ ] **Step 6: Commit Task 1**
 
 ```bash
-git add scripts/gaps_v1_migrator tests/gaps/v1/test_migrate.py
+git add scripts/retired v1 migrator package tests/gaps/v1/test_migrate.py
 git commit -m "Add GAPS v1 migrator scaffold and fuzzy action matcher"
 ```
 
@@ -207,13 +207,13 @@ git commit -m "Add GAPS v1 migrator scaffold and fuzzy action matcher"
 ### Task 2: Deterministic YAML renderer
 
 **Files:**
-- Create: `scripts/gaps_v1_migrator/render.py`
+- Create: `scripts/retired v1 migrator package/render.py`
 
 The migrator must produce stable, diff-friendly output. Python doesn't ship a YAML serializer with comments, so we hand-roll a renderer for the v1 shape. Keys are emitted in a fixed canonical order. Values are scalar or nested with consistent indentation. Multi-line strings use folded scalars (`>`).
 
 - [ ] **Step 1: Write the renderer**
 
-Create `scripts/gaps_v1_migrator/render.py`:
+Create `scripts/retired v1 migrator package/render.py`:
 
 ```python
 """Hand-rolled YAML renderer for v1 spec documents.
@@ -342,7 +342,7 @@ def render(data: Any, indent: int = 0) -> str:
 - [ ] **Step 2: Smoke-test the renderer**
 
 ```bash
-python3 -c "from gaps_v1_migrator.render import render; print(render({'gapsVersion': '1.0.0', 'process': {'id': 'demo', 'scope': {'includes': ['a', 'b'], 'excludes': []}}}))"
+python3 -c "from retired v1 migrator package.render import render; print(render({'gapsVersion': '1.0.0', 'process': {'id': 'demo', 'scope': {'includes': ['a', 'b'], 'excludes': []}}}))"
 ```
 
 Expected output:
@@ -363,7 +363,7 @@ Note: paths under `sys.path` need to include `scripts/`. If the smoke test fails
 - [ ] **Step 3: Commit Task 2**
 
 ```bash
-git add scripts/gaps_v1_migrator/render.py
+git add scripts/retired v1 migrator package/render.py
 git commit -m "Add GAPS v1 migrator renderer"
 ```
 
@@ -372,11 +372,11 @@ git commit -m "Add GAPS v1 migrator renderer"
 ### Task 3: v0.1 → v1 translator
 
 **Files:**
-- Create: `scripts/gaps_v1_migrator/translate.py`
+- Create: `scripts/retired v1 migrator package/translate.py`
 
 - [ ] **Step 1: Write the translator**
 
-Create `scripts/gaps_v1_migrator/translate.py`:
+Create `scripts/retired v1 migrator package/translate.py`:
 
 ```python
 """Translate a v0.1 ga-process YAML dict into a v1 dict shape."""
@@ -460,7 +460,7 @@ def _resolve_actions(prose_list: list[str], catalog: list[dict[str, Any]]) -> tu
             "defaultAutonomyTier": "execute_with_approval",
             "defaultRiskTier": "medium",
             "definition": f"TODO: migrated from v0.1 free-text action {prose!r}; review and normalize against the action catalog.",
-            "justification": "Auto-generated by migrate-gaps-v0-to-v1; human review required before promoting beyond descriptive conformance.",
+            "justification": "Auto-generated by retired v0-to-v1 migration tool; human review required before promoting beyond descriptive conformance.",
         })
         seen.add(slug)
     return matched, unmatched
@@ -708,7 +708,7 @@ def translate(v0: dict[str, Any], action_catalog: list[dict[str, Any]], source_p
 - [ ] **Step 2: Commit Task 3**
 
 ```bash
-git add scripts/gaps_v1_migrator/translate.py
+git add scripts/retired v1 migrator package/translate.py
 git commit -m "Add GAPS v0.1 to v1 translator"
 ```
 
@@ -717,11 +717,11 @@ git commit -m "Add GAPS v0.1 to v1 translator"
 ### Task 4: Migrator CLI
 
 **Files:**
-- Create: `scripts/migrate-gaps-v0-to-v1.py`
+- Create: `scripts/retired v0-to-v1 migration tool`
 
 - [ ] **Step 1: Write the CLI**
 
-Create `scripts/migrate-gaps-v0-to-v1.py`:
+Create `scripts/retired v0-to-v1 migration tool`:
 
 ```python
 #!/usr/bin/env python3
@@ -737,8 +737,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.dont_write_bytecode = True
 
-from gaps_v1_migrator.render import render  # noqa: E402
-from gaps_v1_migrator.translate import translate  # noqa: E402
+from retired v1 migrator package.render import render  # noqa: E402
+from retired v1 migrator package.translate import translate  # noqa: E402
 from gaps_v1_validator.loader import load_yaml  # noqa: E402
 
 ACTION_CATALOG_PATH = REPO_ROOT / "gaps" / "catalogs" / "v1" / "actions.yml"
@@ -779,7 +779,7 @@ class MigratorEndToEndTests(unittest.TestCase):
         import subprocess
         import tempfile
         result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
+            [sys.executable, str(ROOT / "scripts" / "retired v0-to-v1 migration tool"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -804,14 +804,14 @@ class MigratorEndToEndTests(unittest.TestCase):
     def test_migrate_deterministic(self) -> None:
         import subprocess
         first = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
+            [sys.executable, str(ROOT / "scripts" / "retired v0-to-v1 migration tool"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
             cwd=ROOT,
             capture_output=True,
             text=True,
             check=False,
         )
         second = subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "migrate-gaps-v0-to-v1.py"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
+            [sys.executable, str(ROOT / "scripts" / "retired v0-to-v1 migration tool"), str(ROOT / "gaps" / "examples" / "gadd" / "ga-process.yml"), "--stdout"],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -826,7 +826,7 @@ class MigratorEndToEndTests(unittest.TestCase):
 - [ ] **Step 3: Run tests**
 
 ```bash
-chmod +x scripts/migrate-gaps-v0-to-v1.py
+chmod +x scripts/retired v0-to-v1 migration tool
 python3 -m unittest tests.gaps.v1.test_migrate -v
 ```
 
@@ -835,7 +835,7 @@ Expected: all tests PASS. If end-to-end validation fails, the translator needs a
 - [ ] **Step 4: Commit Task 4**
 
 ```bash
-git add scripts/migrate-gaps-v0-to-v1.py tests/gaps/v1/test_migrate.py
+git add scripts/retired v0-to-v1 migration tool tests/gaps/v1/test_migrate.py
 git commit -m "Add GAPS v0.1 to v1 migrator CLI"
 ```
 
@@ -858,10 +858,10 @@ mkdir -p gaps/examples/v1/gadd gaps/examples/v1/compliance-review gaps/examples/
 - [ ] **Step 2: Migrate each spec**
 
 ```bash
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --out gaps/examples/v1/gadd/ga-process.v1.yml
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/compliance-review/ga-process.yml --out gaps/examples/v1/compliance-review/ga-process.v1.yml
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/incident-response/ga-process.yml --out gaps/examples/v1/incident-response/ga-process.v1.yml
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/procurement-approval/ga-process.yml --out gaps/examples/v1/procurement-approval/ga-process.v1.yml
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/gadd/ga-process.yml --out gaps/examples/v1/gadd/ga-process.v1.yml
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/compliance-review/ga-process.yml --out gaps/examples/v1/compliance-review/ga-process.v1.yml
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/incident-response/ga-process.yml --out gaps/examples/v1/incident-response/ga-process.v1.yml
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/procurement-approval/ga-process.yml --out gaps/examples/v1/procurement-approval/ga-process.v1.yml
 ```
 
 Expected: four `wrote ...` confirmations.
@@ -1483,7 +1483,7 @@ Add a migrator smoke test to the script. Edit `scripts/validate-governed-autonom
 echo "==> Smoke-testing v0.1 to v1 migrator"
 SMOKE_SPEC="$(mktemp "$ROOT/gaps-migrate-smoke.XXXXXX")"
 trap 'rm -f "$SMOKE_SPEC"' EXIT
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > "$SMOKE_SPEC"
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/gadd/ga-process.yml --stdout > "$SMOKE_SPEC"
 python3 scripts/validate-gaps-v1.py "$SMOKE_SPEC"
 rm -f "$SMOKE_SPEC"
 trap - EXIT
@@ -1509,7 +1509,7 @@ The v1 reference set lives under `gaps/examples/v1/`:
 Migrate a v0.1 spec to v1:
 
 \`\`\`bash
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/<process-id>/ga-process.yml
+python3 scripts/retired v0-to-v1 migration tool gaps/examples/<process-id>/ga-process.yml
 \`\`\`
 
 The migrator always emits `conformanceLevel: descriptive`. Uplift to

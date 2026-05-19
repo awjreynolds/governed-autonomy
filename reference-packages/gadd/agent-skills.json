@@ -104,20 +104,20 @@
     },
     {
       "command": "/gaps:author",
-      "skill": "gaps-author",
-      "path": "skills/gaps-author",
+      "skill": "retired GAPS author",
+      "path": "skills/retired GAPS author",
       "purpose": "Author or revise a GAPS process specification from an existing governed process."
     },
     {
       "command": "/gaps:validate",
-      "skill": "gaps-validate",
-      "path": "skills/gaps-validate",
+      "skill": "retired GAPS validate",
+      "path": "skills/retired GAPS validate",
       "purpose": "Validate GAPS process specifications and implementation maps."
     },
     {
       "command": "/gaps:generate",
-      "skill": "gaps-generate",
-      "path": "skills/gaps-generate",
+      "skill": "retired GAPS generate",
+      "path": "skills/retired GAPS generate",
       "purpose": "Generate reviewable skill-package skeletons from a GAPS process specification."
     }
   ],

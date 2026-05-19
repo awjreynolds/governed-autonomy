@@ -1,0 +1,9 @@
+description = "Author, retrofit, or revise governed-autonomy skills and process governance."
+prompt = """
+Run `/governed-autonomy:author` using the `governed-autonomy-author` Agent Skill.
+
+If the `governed-autonomy-author` skill is available, activate it and follow its `SKILL.md` exactly. Treat the skill as canonical; this TOML file is only a command router.
+
+User arguments:
+{{args}}
+"""

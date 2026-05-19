@@ -11,7 +11,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "validate-gaps-v1.py"
 FIXTURES = ROOT / "tests" / "gaps" / "v1" / "fixtures" / "invalid"
-MINIMAL = ROOT / "gaps" / "examples" / "v1" / "minimal" / "ga-process.v1.yml"
+GADD = ROOT / "gaps" / "examples" / "v1" / "gadd" / "ga-process.v1.yml"
 
 
 def run(spec: Path, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -25,12 +25,12 @@ def run(spec: Path, *extra: str) -> subprocess.CompletedProcess[str]:
 
 
 class ConformanceTests(unittest.TestCase):
-    def test_minimal_descriptive_passes(self) -> None:
-        result = run(MINIMAL)
+    def test_gadd_descriptive_passes(self) -> None:
+        result = run(GADD)
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_minimal_with_generative_override_fails(self) -> None:
-        result = run(MINIMAL, "--level", "generative")
+    def test_gadd_with_generative_override_fails(self) -> None:
+        result = run(GADD, "--level", "generative")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("stateModel", result.stderr)
 

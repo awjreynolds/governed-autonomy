@@ -10,7 +10,9 @@ Phase 6 establishes what evidence the process produces, who consumes it, and whe
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Evidence lives in the repo — design records as markdown in `docs/decisions/`, verification records as the PR's CI artifacts plus a posted comment summary. The design record is produced by the design step and consumed by tech_lead at the pre-merge gate. The verification record is produced by the implement step and consumed by tech_lead at the same gate. Retention: indefinitely in git history. We don't have a separate ledger — the PR thread is the canonical record for this process, with Linear and Slack as projections."
 
@@ -26,19 +28,29 @@ Destination is concrete (repo, PR thread). Each evidence item has a named produc
 
 ## Reject exemplar 1 (mechanical refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** mechanical-refusal
 
-> "We capture everything in Slack."
+**User stated answer:**
+
+> "We should capture evidence, but I don't know what it is yet or where it should live."
+
+**Probes the dialog must fire:**
+
+- "Name one evidence item this process produces."
+- "Where is that evidence stored as the durable record?"
+- "Who consumes that evidence, and what decision do they make from it?"
 
 **Why this fails (mechanical refusal):**
 
-The user named a place but didn't actually answer the question: `evidence.destination` may be present in some interpretation, but `evidence.items` is empty and the spec's operating-model section warns that Slack as canonical state is an anti-pattern (chat-as-control-plane). The dialog interprets this as evidence.destination missing in the operational sense and refuses mechanically.
+The user acknowledges the phase but gives no evidence item and no destination. The core-set field `evidence.destination` is empty and `evidence.items` cannot be populated. Hard stop.
 
 The dialog explains: "Operating model §8: important process state should not live only in chat. What evidence items will exist after this process runs, and where will they be reachable later?"
 
 ## Reject exemplar 2 (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "We log everything to a directory called `process-logs/`. Producer: the agent. Consumer: nobody specifically, just whoever's curious later."
 
@@ -82,7 +94,7 @@ accept:
 
 reject_mechanical:
   user_inputs:
-    - "We capture everything in Slack."
+    - "We should capture evidence, but I don't know what it is yet or where it should live."
   expected_outcome: mechanical-refusal
   expected_refusal_reason: evidence-destination-missing
 

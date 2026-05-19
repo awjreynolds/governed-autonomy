@@ -1,0 +1,6 @@
+# Governance Review Expected Findings
+
+F001 blocking section=roles-and-accountability: no process-level governance sidecar exists for the generated GADD skill package.
+F002 blocking section=authority-boundaries: allowed and prohibited actions are encoded in a formal GAPS spec rather than runtime-visible step governance.
+F201 advisory section=evidence-requirements: evidence exists in the spec but should be checked against generated skill prose.
+

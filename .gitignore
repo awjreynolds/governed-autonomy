@@ -3,3 +3,5 @@ __pycache__/
 gaps/generated/
 tests/**/.runs/
 .DS_Store
+.worktrees/
+.worktrees/

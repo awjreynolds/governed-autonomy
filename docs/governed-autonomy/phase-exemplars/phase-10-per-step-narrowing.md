@@ -10,11 +10,13 @@ Not hard-refuse, but more-permissive autonomy overrides without justification fi
 
 ## Accept exemplar
 
-**User input (for the investigate-risk step from Phase 9):**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer (for the investigate-risk step from Phase 9):**
 
 > "Investigate-risk step: overrides allowed_actions to only catalog:action:gather-context, catalog:action:read-repo-evidence, catalog:action:read-external-system-state. Investigation must be read-only — these are all data-plane-read. No autonomy override; inherits the process default of draft. No justification needed because this is *less* permissive than the process default."
 
-**User input (for the merge step):**
+**User stated answer (for the merge step):**
 
 > "Merge step: overrides autonomy_tier to human_only. No allowed_actions override; inherits the process default but the human_only tier means the agent waits and the tech_lead acts. No justification needed because human_only is less permissive."
 
@@ -30,7 +32,9 @@ Investigate-risk correctly narrows to read-only actions, matching its `step_kind
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "The implement step needs to be `autonomous_with_monitoring` because the agent should be able to push commits quickly without waiting for me. The justification is 'speed.'"
 

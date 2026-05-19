@@ -1,0 +1,7 @@
+interface:
+  display_name: "Governed Autonomy Critique"
+  short_description: "Review governed-autonomy artifacts"
+  default_prompt: "Use $governed-autonomy-critique to review a skill, skill set, or process directory and write governance-review.md."
+
+policy:
+  allow_implicit_invocation: true

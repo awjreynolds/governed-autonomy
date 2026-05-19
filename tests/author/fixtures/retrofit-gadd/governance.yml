@@ -1,0 +1,56 @@
+governanceVersion: "1"
+process:
+  id: retrofit-gadd
+  name: Retrofit GADD
+  purpose: Retrofit an existing GADD skill with process-level governance.
+roles:
+  - id: maintainer
+    label: Maintainer
+    accountable_for: Final approval and publication of generated skills.
+  - id: agent
+    label: Authoring agent
+    autonomous: true
+    accountable_for: nothing
+authority:
+  default_autonomy_tier: draft
+  default_allowed_actions: ["catalog:action:draft-artifact", "catalog:action:run-verification"]
+  prohibited_actions: ["catalog:action:approve-own-work"]
+risk:
+  patterns: ["catalog:risk:post-hoc-governance"]
+  blast_radius: skill-package
+evidence:
+  destination: repo
+  items:
+    - id: retrofit-record
+      kind: "catalog:evidence:design-decision"
+      producer: "step:design"
+      consumer: ["role:maintainer"]
+gates:
+  - id: maintainer-review
+    requires_role: "role:maintainer"
+    requires_evidence: ["evidence:retrofit-record"]
+    blocks_steps: ["step:approve"]
+escalation:
+  - condition: existing-skill-contradicts-governance
+    to: "role:maintainer"
+state:
+  canonical: repo
+  projections: ["agent-skills-json"]
+freshness:
+  drift_policy: Review whenever generated skills or command routing changes.
+steps:
+  - id: design
+    label: Design retrofit
+    purpose: Draft the retrofit governance record and identify contradictions.
+    step_kind: execute
+    requires_role: "role:agent"
+  - id: approve
+    label: Approve retrofit
+    purpose: Approve the retrofit governance record before publication.
+    step_kind: approve
+    requires_role: "role:maintainer"
+    authority_overrides:
+      autonomy_tier: human_only
+warnings: []
+knownGaps: []
+

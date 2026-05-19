@@ -10,7 +10,9 @@ Not hard-refuse, but `state.canonical: unknown` will produce a warning, and any 
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Canonical state is the repo — PR threads, commits, merged branches, CI artifacts. Linear is a projection: it reflects the PR state but isn't the source of truth, and discrepancies are resolved by checking the PR. Slack is also a projection — discussion happens there but no decisions live there. Drift policy: review the projection mappings every 6 months or when we change source-control systems."
 
@@ -26,7 +28,9 @@ Canonical is named (repo) and concrete (PR threads, commits, CI). Projections ar
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "We use Linear, Slack, GitHub, and a Notion doc. Everyone knows where to look."
 

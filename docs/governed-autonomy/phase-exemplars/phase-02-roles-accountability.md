@@ -10,7 +10,9 @@ Phase 2 establishes the roles in the process and which one is accountable for ou
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "The tech_lead is accountable for merge decisions and release readiness. If something gets shipped broken, that's on them. Failure produces a PagerDuty alert; the on-call rotation pages the tech_lead. Vacation handoff is documented in our team runbook — the deputy is the staff_engineer. The merge bit can be revoked from their GitHub team membership if needed. The agent (role:agent) is autonomous and owns nothing — its accountability is `nothing`."
 
@@ -28,9 +30,17 @@ The agent role is correctly flagged `autonomous: true` with `accountable_for: no
 
 ## Reject exemplar 1 (mechanical refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** mechanical-refusal
+
+**User stated answer:**
 
 > "We have engineers, designers, and product managers. The agent will work with them."
+
+**Probes the dialog must fire:**
+
+- "Which human role is accountable for the process outcome?"
+- "What is that role accountable for, specifically?"
+- "Is the agent accountable for anything, or is accountability explicitly held by a human?"
 
 **Why this fails (mechanical refusal):**
 
@@ -40,7 +50,9 @@ The dialog explains: "Operating model §1 requires a named accountable human rol
 
 ## Reject exemplar 2 (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "The engineering team is accountable for everything in this process. They're a great team."
 

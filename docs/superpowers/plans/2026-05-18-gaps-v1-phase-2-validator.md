@@ -3125,7 +3125,7 @@ git commit -m "Add GAPS v1 comprehensive validator fixture and end-to-end covera
 - The validator never crashes on missing optional blocks (`stateModel`, `decision`, `controlPlaneActions`, etc.); it skips checks that don't apply.
 - Cross-references resolved at descriptive level; conformance gating layered on top without rejecting otherwise valid descriptive specs.
 - `--level` override allows testing stricter levels without editing the spec.
-- v0.1 reference specs continue to validate via the v0.1 path; Phase 2 changes nothing in `scripts/validate-gaps.py`.
+- v0.1 reference specs continue to validate via the v0.1 path; Phase 2 changes nothing in `scripts/retired GAPS v0 validator`.
 - The FEEL subset is intentionally limited; evaluator returns parse trees only — actual condition evaluation is Phase 4/5.
 
 ## What Phase 2 does NOT do

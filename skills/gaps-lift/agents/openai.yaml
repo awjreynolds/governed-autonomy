@@ -1,6 +1,0 @@
-name: gaps-lift
-description: >
-  Reverse-lift a generated GAPS v1 skill package into a structural spec
-  representation. Used by /gaps:round-trip and for verifying generated
-  packages.
-command: /gaps:lift

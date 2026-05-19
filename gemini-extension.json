@@ -3,10 +3,8 @@
   "version": "0.1.0",
   "contextFileName": "GEMINI.md",
   "commands": [
-    "/gaps:author",
-    "/gaps:validate",
-    "/gaps:generate",
-    "/gaps:lift",
-    "/gaps:round-trip"
+    "/governed-autonomy:author",
+    "/governed-autonomy:critique",
+    "/governed-autonomy:lint"
   ]
 }

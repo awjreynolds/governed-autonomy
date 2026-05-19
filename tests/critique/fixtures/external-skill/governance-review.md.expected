@@ -1,0 +1,6 @@
+# Governance Review Expected Findings
+
+F001 blocking section=roles-and-accountability: no governance record at all.
+F002 blocking section=authority-boundaries: merge authority is prohibited in prose but not captured as a structured boundary.
+F203 advisory section=evidence-requirements: verification evidence has no stated destination or consumer.
+

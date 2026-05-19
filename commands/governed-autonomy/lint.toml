@@ -1,0 +1,11 @@
+description = "Run deterministic Governed Autonomy lint checks."
+prompt = """
+Run `/governed-autonomy:lint` as a deterministic lint command.
+
+Use `scripts/ga-lint` when present. If the user supplies a path, pass that path through. If no path is supplied, use the lint tool's discovery behavior. Do not edit files.
+
+If `scripts/ga-lint` is unavailable, report that the lint implementation is not installed in this checkout yet and point to `docs/governed-autonomy/lint.md`.
+
+User arguments:
+{{args}}
+"""

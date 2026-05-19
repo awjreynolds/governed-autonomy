@@ -4,7 +4,7 @@
 
 **Goal:** Build a spec-driven skill-package generator that produces a usable governed-autonomy skill package from a `generative`-conformance v1 spec without humans authoring skill content. Promote the `benefits-eligibility-review` reference spec to `generative` conformance and prove the generator end-to-end on it.
 
-**Architecture:** `scripts/generate-gaps-skill-package.py` (v1) reads a generative-conformance spec, loads its referenced catalogs, and emits one `SKILL.md` per lane plus manifests and command adapters. Skill content is derived structurally: Input Quality Gate from the lane's `evidenceInputs[].shape.required`, Rules from `authority.allowedActions[]` and `authority.prohibitedActions[]` with action catalog definitions inlined verbatim, State Loop as a Markdown state-transition table, Gates as Markdown decision tables, Stop Conditions from terminal states plus escalating gate paths, Evidence To Produce from `evidenceOutputs[]`. The generator emits a deterministic byte-identical package for unchanged inputs. A new `implementation.v1.yml` is generated alongside the skills so Phase 5's round-trip can verify the binding. The v0.1 generator is left in place for the deprecation window.
+**Architecture:** `scripts/retired GAPS package builder` (v1) reads a generative-conformance spec, loads its referenced catalogs, and emits one `SKILL.md` per lane plus manifests and command adapters. Skill content is derived structurally: Input Quality Gate from the lane's `evidenceInputs[].shape.required`, Rules from `authority.allowedActions[]` and `authority.prohibitedActions[]` with action catalog definitions inlined verbatim, State Loop as a Markdown state-transition table, Gates as Markdown decision tables, Stop Conditions from terminal states plus escalating gate paths, Evidence To Produce from `evidenceOutputs[]`. The generator emits a deterministic byte-identical package for unchanged inputs. A new `implementation.v1.yml` is generated alongside the skills so Phase 5's round-trip can verify the binding. The v0.1 generator is left in place for the deprecation window.
 
 **Tech Stack:** Python 3 stdlib, the catalogs and v1 schema from Phase 1, the validator package from Phase 2, the renderer from Phase 3.
 
@@ -13,14 +13,14 @@
 ## File Structure
 
 **New files:**
-- `scripts/generate-gaps-skill-package-v1.py` — CLI entry
-- `scripts/gaps_v1_generator/__init__.py`
-- `scripts/gaps_v1_generator/context.py` — load spec, catalogs, build a generator context
-- `scripts/gaps_v1_generator/skill_md.py` — compose `SKILL.md` per lane
-- `scripts/gaps_v1_generator/manifests.py` — agent-skills.json, plugin.json, gemini-extension.json
-- `scripts/gaps_v1_generator/adapters.py` — commands/<process>/<command>.md and .toml
-- `scripts/gaps_v1_generator/implementation_map.py` — implementation.v1.yml
-- `scripts/gaps_v1_generator/markdown.py` — small Markdown table helpers
+- `scripts/retired GAPS v1 package builder` — CLI entry
+- `scripts/retired v1 generator package/__init__.py`
+- `scripts/retired v1 generator package/context.py` — load spec, catalogs, build a generator context
+- `scripts/retired v1 generator package/skill_md.py` — compose `SKILL.md` per lane
+- `scripts/retired v1 generator package/manifests.py` — agent-skills.json, plugin.json, gemini-extension.json
+- `scripts/retired v1 generator package/adapters.py` — commands/<process>/<command>.md and .toml
+- `scripts/retired v1 generator package/implementation_map.py` — implementation.v1.yml
+- `scripts/retired v1 generator package/markdown.py` — small Markdown table helpers
 - `tests/gaps/v1/test_generator.py`
 - `tests/gaps/v1/fixtures/generated/.gitkeep` — placeholder; test outputs go here when needed
 - `gaps/examples/v1/benefits-eligibility-review/expected/` — golden generated package directory
@@ -35,20 +35,20 @@
 ### Task 1: Generator scaffold and context loader
 
 **Files:**
-- Create: `scripts/gaps_v1_generator/__init__.py`
-- Create: `scripts/gaps_v1_generator/context.py`
-- Create: `scripts/gaps_v1_generator/markdown.py`
+- Create: `scripts/retired v1 generator package/__init__.py`
+- Create: `scripts/retired v1 generator package/context.py`
+- Create: `scripts/retired v1 generator package/markdown.py`
 
 - [ ] **Step 1: Create the package**
 
 ```bash
-mkdir -p scripts/gaps_v1_generator
-touch scripts/gaps_v1_generator/__init__.py
+mkdir -p scripts/retired v1 generator package
+touch scripts/retired v1 generator package/__init__.py
 ```
 
 - [ ] **Step 2: Write the context loader**
 
-Create `scripts/gaps_v1_generator/context.py`:
+Create `scripts/retired v1 generator package/context.py`:
 
 ```python
 """Load a spec and its catalogs into a structured context for generation."""
@@ -113,7 +113,7 @@ def build_context(spec_path: Path) -> GeneratorContext:
 
 - [ ] **Step 3: Write small Markdown helpers**
 
-Create `scripts/gaps_v1_generator/markdown.py`:
+Create `scripts/retired v1 generator package/markdown.py`:
 
 ```python
 """Small Markdown rendering helpers."""
@@ -144,7 +144,7 @@ def bullet_list(items: Iterable[str], indent: int = 0) -> str:
 - [ ] **Step 4: Commit Task 1**
 
 ```bash
-git add scripts/gaps_v1_generator
+git add scripts/retired v1 generator package
 git commit -m "Add GAPS v1 generator scaffold and context loader"
 ```
 
@@ -153,13 +153,13 @@ git commit -m "Add GAPS v1 generator scaffold and context loader"
 ### Task 2: Lane SKILL.md composer
 
 **Files:**
-- Create: `scripts/gaps_v1_generator/skill_md.py`
+- Create: `scripts/retired v1 generator package/skill_md.py`
 
 The composer renders one `SKILL.md` per lane. Section order: front-matter, Purpose, Input Quality Gate, Rules, State Loop, Gates, Evidence To Produce, Stop Conditions, Non-claim Language. Content is derived directly from the spec and catalogs.
 
 - [ ] **Step 1: Write the composer**
 
-Create `scripts/gaps_v1_generator/skill_md.py`:
+Create `scripts/retired v1 generator package/skill_md.py`:
 
 ```python
 """Compose SKILL.md content for each lane from a generative-conformance spec."""
@@ -384,7 +384,7 @@ def compose_lane_skill(ctx: GeneratorContext, lane: dict[str, Any]) -> tuple[str
 - [ ] **Step 2: Commit Task 2**
 
 ```bash
-git add scripts/gaps_v1_generator/skill_md.py scripts/gaps_v1_generator/markdown.py
+git add scripts/retired v1 generator package/skill_md.py scripts/retired v1 generator package/markdown.py
 git commit -m "Add GAPS v1 lane SKILL.md composer"
 ```
 
@@ -393,12 +393,12 @@ git commit -m "Add GAPS v1 lane SKILL.md composer"
 ### Task 3: Manifest and adapter composers
 
 **Files:**
-- Create: `scripts/gaps_v1_generator/manifests.py`
-- Create: `scripts/gaps_v1_generator/adapters.py`
+- Create: `scripts/retired v1 generator package/manifests.py`
+- Create: `scripts/retired v1 generator package/adapters.py`
 
 - [ ] **Step 1: Write the manifest composer**
 
-Create `scripts/gaps_v1_generator/manifests.py`:
+Create `scripts/retired v1 generator package/manifests.py`:
 
 ```python
 """Generate package manifests (agent-skills.json, plugin.json, gemini-extension.json)."""
@@ -464,7 +464,7 @@ def gemini_extension_json(ctx: GeneratorContext, skill_id_for_lane: dict[str, st
 
 - [ ] **Step 2: Write the adapter composer**
 
-Create `scripts/gaps_v1_generator/adapters.py`:
+Create `scripts/retired v1 generator package/adapters.py`:
 
 ```python
 """Generate per-command adapter files (commands/<process>/<command>.md and .toml)."""
@@ -510,7 +510,7 @@ def agents_openai_yaml(ctx: GeneratorContext, lane: dict[str, Any], skill_id: st
 - [ ] **Step 3: Commit Task 3**
 
 ```bash
-git add scripts/gaps_v1_generator/manifests.py scripts/gaps_v1_generator/adapters.py
+git add scripts/retired v1 generator package/manifests.py scripts/retired v1 generator package/adapters.py
 git commit -m "Add GAPS v1 generator manifest and adapter composers"
 ```
 
@@ -519,13 +519,13 @@ git commit -m "Add GAPS v1 generator manifest and adapter composers"
 ### Task 4: Implementation map composer
 
 **Files:**
-- Create: `scripts/gaps_v1_generator/implementation_map.py`
+- Create: `scripts/retired v1 generator package/implementation_map.py`
 
 The implementation map declares the binding between the spec and the generated skill package. Phase 5 uses it for round-trip checks. The map declares which states, transitions, and gates each generated skill implements; that lets the round-trip diff compute spec-skill equivalence.
 
 - [ ] **Step 1: Write the composer**
 
-Create `scripts/gaps_v1_generator/implementation_map.py`:
+Create `scripts/retired v1 generator package/implementation_map.py`:
 
 ```python
 """Generate implementation.v1.yml binding the spec to the generated skill package."""
@@ -590,7 +590,7 @@ def render_implementation_map(
         "controlPlaneActions": list(ctx.spec.get("controlPlaneActions", []) or []),
     }
     # YAML emit: defer to v1 migrator renderer for stability.
-    from gaps_v1_migrator.render import render
+    from retired v1 migrator package.render import render
 
     return render(payload)
 
@@ -602,7 +602,7 @@ def fingerprint_files(files: list[tuple[str, str]]) -> str:
 - [ ] **Step 2: Commit Task 4**
 
 ```bash
-git add scripts/gaps_v1_generator/implementation_map.py
+git add scripts/retired v1 generator package/implementation_map.py
 git commit -m "Add GAPS v1 generator implementation-map composer"
 ```
 
@@ -611,11 +611,11 @@ git commit -m "Add GAPS v1 generator implementation-map composer"
 ### Task 5: Generator CLI
 
 **Files:**
-- Create: `scripts/generate-gaps-skill-package-v1.py`
+- Create: `scripts/retired GAPS v1 package builder`
 
 - [ ] **Step 1: Write the CLI**
 
-Create `scripts/generate-gaps-skill-package-v1.py`:
+Create `scripts/retired GAPS v1 package builder`:
 
 ```python
 #!/usr/bin/env python3
@@ -633,11 +633,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.dont_write_bytecode = True
 
-from gaps_v1_generator.adapters import agents_openai_yaml, command_md, command_toml  # noqa: E402
-from gaps_v1_generator.context import build_context  # noqa: E402
-from gaps_v1_generator.implementation_map import render_implementation_map  # noqa: E402
-from gaps_v1_generator.manifests import agent_skills_json, claude_plugin_json, gemini_extension_json  # noqa: E402
-from gaps_v1_generator.skill_md import compose_lane_skill  # noqa: E402
+from retired v1 generator package.adapters import agents_openai_yaml, command_md, command_toml  # noqa: E402
+from retired v1 generator package.context import build_context  # noqa: E402
+from retired v1 generator package.implementation_map import render_implementation_map  # noqa: E402
+from retired v1 generator package.manifests import agent_skills_json, claude_plugin_json, gemini_extension_json  # noqa: E402
+from retired v1 generator package.skill_md import compose_lane_skill  # noqa: E402
 
 
 def _files_for_spec(spec_path: Path) -> list[tuple[str, str]]:
@@ -716,8 +716,8 @@ if __name__ == "__main__":
 - [ ] **Step 2: Commit Task 5**
 
 ```bash
-chmod +x scripts/generate-gaps-skill-package-v1.py
-git add scripts/generate-gaps-skill-package-v1.py
+chmod +x scripts/retired GAPS v1 package builder
+git add scripts/retired GAPS v1 package builder
 git commit -m "Add GAPS v1 generator CLI"
 ```
 
@@ -769,7 +769,7 @@ git commit -m "Promote benefits-eligibility-review spec to generative conformanc
 - [ ] **Step 1: Generate**
 
 ```bash
-python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --validate-after
+python3 scripts/retired GAPS v1 package builder gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --validate-after
 ```
 
 Expected: a `wrote ...` line for each generated file. Approximately: four `SKILL.md`, four `agents/openai.yaml`, four command `.md`, four command `.toml`, one `agent-skills.json`, one `.claude-plugin/plugin.json`, one `gemini-extension.json`, one `implementation.v1.yml`.
@@ -798,7 +798,7 @@ git commit -m "Snapshot generated package for benefits-eligibility-review pilot"
 - [ ] **Step 4: Verify --check mode passes**
 
 ```bash
-python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --check
+python3 scripts/retired GAPS v1 package builder gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --check
 ```
 
 Expected: exit 0 (no DIFFER lines).
@@ -806,7 +806,7 @@ Expected: exit 0 (no DIFFER lines).
 - [ ] **Step 5: Verify deterministic regeneration**
 
 ```bash
-python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root /tmp/gaps-regen
+python3 scripts/retired GAPS v1 package builder gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root /tmp/gaps-regen
 diff -r gaps/examples/v1/benefits-eligibility-review/expected /tmp/gaps-regen
 rm -rf /tmp/gaps-regen
 ```
@@ -837,7 +837,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
-SCRIPT = ROOT / "scripts" / "generate-gaps-skill-package-v1.py"
+SCRIPT = ROOT / "scripts" / "retired GAPS v1 package builder"
 PILOT_SPEC = ROOT / "gaps" / "examples" / "v1" / "benefits-eligibility-review" / "ga-process.v1.yml"
 EXPECTED_ROOT = ROOT / "gaps" / "examples" / "v1" / "benefits-eligibility-review" / "expected"
 
@@ -912,7 +912,7 @@ Edit `scripts/validate-governed-autonomy.sh` and add before the test discovery l
 
 ```bash
 echo "==> Checking GAPS v1 pilot generator output is up to date"
-python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --check
+python3 scripts/retired GAPS v1 package builder gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/examples/v1/benefits-eligibility-review/expected --check
 ```
 
 - [ ] **Step 2: Update `gaps/README.md`**
@@ -925,7 +925,7 @@ Append to the v1 incubation section:
 A generative-conformance spec drives the generator:
 
 \`\`\`bash
-python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/generated/benefits-eligibility-review --validate-after
+python3 scripts/retired GAPS v1 package builder gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/generated/benefits-eligibility-review --validate-after
 \`\`\`
 
 The pilot package lives at `gaps/examples/v1/benefits-eligibility-review/expected/`. The generator produces a deterministic byte-identical package for unchanged input.

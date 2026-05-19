@@ -10,7 +10,9 @@ This phase is **not** hard-refuse. A user who can't articulate the purpose can b
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "I want to set up a governed skill set for our SDLC feature-delivery workflow. The goal is to let coding agents draft changes, run tests, and open PRs, but never merge to main without a human reviewer. In scope: feature development through PR open. Out of scope: production deployment, hotfixes, and rollback playbooks."
 
@@ -25,7 +27,9 @@ The user named the process (`sdlc-feature-delivery`), gave a one-sentence purpos
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "It's our software development workflow. The agents help us build features faster."
 

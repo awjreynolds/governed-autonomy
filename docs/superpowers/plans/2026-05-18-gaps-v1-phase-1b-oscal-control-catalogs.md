@@ -896,10 +896,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> Validating GAPS v0.1 reference specs"
-python3 scripts/validate-gaps.py
+python3 scripts/retired GAPS v0 validator
 
 echo "==> Validating GAPS v0.1 GADD implementation map"
-python3 scripts/validate-gaps-implementation.py
+python3 scripts/retired implementation validator
 
 echo "==> Checking GAPS v1 OSCAL catalogs are up to date with sources"
 python3 scripts/build-oscal-catalogs.py --check

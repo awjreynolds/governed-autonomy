@@ -1,0 +1,6 @@
+# Governance Review Expected Findings
+
+F001 blocking section=roles-and-accountability: no governance record at all.
+F101 significant section=escalation-and-approval: approval steps are distributed across skills without a single process-level gate record.
+F202 advisory section=state-and-auditability: canonical state and projection behavior are implicit in commands rather than stated.
+

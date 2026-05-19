@@ -10,7 +10,9 @@ Not hard-refuse, but `steps` must be non-empty (`E013`). A process with no steps
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Six steps: (1) design — produce a design record, step_kind: execute, requires_role: agent; (2) investigate-risk — read code paths and dependencies to identify reversibility constraints, step_kind: investigate, requires_role: agent, overrides allowed_actions to read-only; (3) implement — draft the code change and run verification, step_kind: execute, requires_role: agent; (4) review — read the diff and verify alignment with the design, step_kind: investigate, requires_role: tech_lead; (5) merge — merge after pre-merge gate passes, step_kind: approve, requires_role: tech_lead, autonomy_tier: human_only; (6) monitor-rollout — watch canary metrics, step_kind: monitor, requires_role: agent."
 
@@ -26,7 +28,9 @@ Six discrete steps with distinct `step_kind` values. Investigation step is corre
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "The agent does the work and the human approves. Two steps."
 

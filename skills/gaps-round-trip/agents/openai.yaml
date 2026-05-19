@@ -1,6 +1,0 @@
-name: gaps-round-trip
-description: >
-  Verify a GAPS v1 spec round-trips through the generator and lift with no
-  structural divergence. The v1.0.0 acceptance test for generative-level
-  specs.
-command: /gaps:round-trip

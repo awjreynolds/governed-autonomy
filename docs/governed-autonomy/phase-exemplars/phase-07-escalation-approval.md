@@ -10,7 +10,9 @@ Phase 7 establishes the difference between escalation (the system saying "I've h
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Escalation conditions: (a) scope-change-detected — agent attempts to touch a file outside the named feature; (b) verification-fails-after-3-retries — repeated test failure; (c) input-quality-gate-fail — ticket missing acceptance criteria. All three escalate to tech_lead via Slack mention with a link to the PR. Approval is separate: pre-merge gate requires tech_lead's explicit approval on the PR. The agent who drafted the change cannot approve it. The reviewer who flags the change is welcome to also approve it after they've reviewed."
 
@@ -26,9 +28,17 @@ Escalation conditions are concrete (operational: scope-change, retries, AC missi
 
 ## Reject exemplar 1 (mechanical refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** mechanical-refusal
+
+**User stated answer:**
 
 > "The agent asks for help when it's confused."
+
+**Probes the dialog must fire:**
+
+- "What exact condition makes the agent stop and escalate?"
+- "Who does the escalation go to?"
+- "What route does the escalation use, and what evidence accompanies it?"
 
 **Why this fails (mechanical refusal):**
 
@@ -38,7 +48,9 @@ The dialog explains: "Operating model §7: escalation must be defined before dep
 
 ## Reject exemplar 2 (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "Escalation: if the agent has trouble, it should escalate to engineering. Approval: someone from engineering will approve."
 

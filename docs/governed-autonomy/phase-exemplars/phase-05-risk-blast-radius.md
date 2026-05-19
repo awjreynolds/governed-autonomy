@@ -10,7 +10,9 @@ Not hard-refuse, but a `risk.blast_radius: unknown` produces a `W002` warning po
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Blast radius is production-code. Worst case is a buggy merge that breaks CI for everyone or ships a regression to customers. Reversibility is good — we can revert a commit in minutes, but only if we notice within the post-deploy monitoring window. Risk patterns I care about: post-hoc-governance (the agent did something we only see in review) and scope-creep-at-machine-speed (touching files outside the named feature). The customer impact is mediated by canaries; we don't ship to 100% until 48 hours."
 
@@ -26,7 +28,9 @@ Blast radius is named (production-code). Reversibility is concrete (revert + mon
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "Pretty low risk, since the agent only drafts and humans approve everything."
 

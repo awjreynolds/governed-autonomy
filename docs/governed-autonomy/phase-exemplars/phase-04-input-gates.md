@@ -10,7 +10,9 @@ Not hard-refuse. A process with no input gates is still a process; it's just one
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Before this process starts: there must be a linked spec or ticket (Linear), the acceptance criteria must be stated explicitly, and the affected code area must be identifiable from the description. If any of these are missing, the agent routes to request-clarification rather than starting work."
 
@@ -25,7 +27,9 @@ Three concrete inputs named (spec/ticket, acceptance criteria, code area). Failu
 
 ## Reject exemplar (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "The agent needs a good ticket to start."
 

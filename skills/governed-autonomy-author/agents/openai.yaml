@@ -1,0 +1,7 @@
+interface:
+  display_name: "Governed Autonomy Author"
+  short_description: "Author governed-autonomy skill sets"
+  default_prompt: "Use $governed-autonomy-author to create, retrofit, or revise a governed process with governance.yml and per-step skills."
+
+policy:
+  allow_implicit_invocation: true

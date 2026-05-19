@@ -12,7 +12,82 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "validate-gaps-v1.py"
-MINIMAL = (ROOT / "gaps" / "examples" / "v1" / "minimal" / "ga-process.v1.yml").read_text()
+MINIMAL = """\
+gapsVersion: "1.0.0"
+specStatus: draft
+conformanceLevel: descriptive
+
+process:
+  id: minimal-example
+  name: Minimal GAPS v1 fixture
+  purpose: Smoke-test fixture proving the v1 schema accepts a structurally valid minimal spec.
+  scope:
+    includes:
+      - smoke testing the v1 schema
+    excludes:
+      - any real process
+
+substrate:
+  oscalControlCatalogs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+  actionCatalog: gaps/catalogs/v1/actions.yml
+  evidenceCatalog: gaps/catalogs/v1/evidence-kinds.yml
+  riskPatternCatalog: gaps/catalogs/v1/risk-patterns.yml
+
+roles:
+  - id: process_owner
+    label: Process owner
+    accountabilityScope: This minimal fixture and its smoke-test outcome.
+
+evidenceModel:
+  caseFileItems:
+    - id: minimal-observation
+      kind: context-observation
+      label: A single observation item
+      producer: lane:single_lane
+      consumer:
+        - role:process_owner
+
+lanes:
+  - id: single_lane
+    label: Single lane
+    purpose: One lane for smoke testing.
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: low
+      allowedActions:
+        - draft-artifact
+      prohibitedActions:
+        - approve-own-work
+    skills:
+      - minimal-example-draft
+
+gates: []
+
+projectionPolicy:
+  canonicalStateSource: repo-local-ledger
+  pathPattern: "gaps/examples/v1/minimal/state/**"
+
+riskPatterns:
+  - patternRef: post-hoc-governance
+    mitigations:
+      - "This fixture is descriptive only and exists to smoke-test the schema."
+
+controlAssessment:
+  catalogRefs: []
+  controlImplementations: []
+
+freshness:
+  reviewedAt: "2026-05-19"
+  driftPolicy: Update this fixture only when the v1 schema changes.
+
+knownGaps:
+  - id: minimal-fixture-is-descriptive-only
+    summary: The minimal fixture is intentionally at the descriptive conformance level.
+    severity: minor
+    plannedResolution: internal-test
+"""
 
 
 def run(content: str) -> subprocess.CompletedProcess[str]:

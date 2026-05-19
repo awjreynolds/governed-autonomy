@@ -10,7 +10,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "validate-gaps-v1.py"
-MINIMAL_FIXTURE = ROOT / "gaps" / "examples" / "v1" / "minimal" / "ga-process.v1.yml"
+GADD_FIXTURE = ROOT / "gaps" / "examples" / "v1" / "gadd" / "ga-process.v1.yml"
 
 
 def run(*args: str) -> subprocess.CompletedProcess[str]:
@@ -24,8 +24,8 @@ def run(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 class ValidateGapsV1Tests(unittest.TestCase):
-    def test_minimal_fixture_passes(self) -> None:
-        result = run(str(MINIMAL_FIXTURE))
+    def test_gadd_fixture_passes(self) -> None:
+        result = run(str(GADD_FIXTURE))
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
     def test_missing_required_field_fails(self) -> None:
@@ -52,7 +52,7 @@ class ValidateGapsV1Tests(unittest.TestCase):
         import tempfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as handle:
-            handle.write(MINIMAL_FIXTURE.read_text() + "\nrogueField: nope\n")
+            handle.write(GADD_FIXTURE.read_text() + "\nrogueField: nope\n")
             broken = Path(handle.name)
         try:
             result = run(str(broken))

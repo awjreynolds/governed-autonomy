@@ -1,4 +1,4 @@
-"""End-to-end validator coverage on the comprehensive fixture."""
+"""End-to-end validator coverage on the retained GADD fixture."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "validate-gaps-v1.py"
-COMPREHENSIVE = ROOT / "gaps" / "examples" / "v1" / "comprehensive" / "ga-process.v1.yml"
+GADD = ROOT / "gaps" / "examples" / "v1" / "gadd" / "ga-process.v1.yml"
 
 
 class EndToEndTests(unittest.TestCase):
     def test_comprehensive_fixture_passes(self) -> None:
         result = subprocess.run(
-            [sys.executable, str(SCRIPT), str(COMPREHENSIVE)],
+            [sys.executable, str(SCRIPT), str(GADD)],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -26,7 +26,7 @@ class EndToEndTests(unittest.TestCase):
 
     def test_comprehensive_fixture_passes_at_machine_validatable(self) -> None:
         result = subprocess.run(
-            [sys.executable, str(SCRIPT), str(COMPREHENSIVE), "--level", "machine-validatable"],
+            [sys.executable, str(SCRIPT), str(GADD), "--level", "machine-validatable"],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -36,15 +36,14 @@ class EndToEndTests(unittest.TestCase):
 
     def test_comprehensive_fixture_fails_at_generative(self) -> None:
         result = subprocess.run(
-            [sys.executable, str(SCRIPT), str(COMPREHENSIVE), "--level", "generative"],
+            [sys.executable, str(SCRIPT), str(GADD), "--level", "generative"],
             cwd=ROOT,
             capture_output=True,
             text=True,
             check=False,
         )
-        # This fixture is intentionally not generative because evidenceModel
-        # case file items used as evidenceInputs do not all have shape.required
-        # in a way generative requires across both lanes. Expect failure.
+        # This retained fixture is intentionally not generative; it preserves
+        # the descriptive GADD process while --emit-spec remains internal.
         self.assertNotEqual(result.returncode, 0)
 
 

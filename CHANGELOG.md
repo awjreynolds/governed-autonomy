@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.1.0 — 2026-05-19
+
+Governed Autonomy authoring cutover. Replaces hand-authored GAPS specs
+as the user-facing workflow with an interrogative author dialog,
+read-only critique skill, and deterministic `ga-lint` CLI for
+`governance.yml`.
+
+### Added
+
+- `/governed-autonomy:author`, `/governed-autonomy:critique`, and
+  `/governed-autonomy:lint` command surfaces.
+- `scripts/ga-lint` and `scripts/ga_lint/` deterministic lint package.
+- Phase exemplar contracts for the operating-model dialog.
+- Critique and author acceptance fixtures.
+
+### Changed
+
+- README and quickstart now lead with governed-autonomy authoring,
+  critique, and linting.
+- GAPS v1 schema/catalogs/validator are retained as internal
+  `--emit-spec` plumbing.
+
+### Removed
+
+- Retired GAPS user-facing skills, commands, generator, migrator, lift,
+  round-trip, v0 validator, v0 examples, and generated v1 package
+  examples.
+
 ## 1.0.0 — 2026-05-19
 
 GAPS v1.0.0. Adopts OSCAL structurally for evidence and control
@@ -16,10 +44,10 @@ reverse lift, and round-trip verification.
 - v1 validator (`scripts/validate-gaps-v1.py`) with schema, cross-ref,
   catalog-ref, state-machine, gate-decision, authority, OSCAL-ref, and
   conformance-level checks.
-- v1 generator (`scripts/generate-gaps-skill-package-v1.py`).
-- Migrator (`scripts/migrate-gaps-v0-to-v1.py`).
-- Reverse lift (`scripts/gaps-lift.py`).
-- Round-trip (`scripts/gaps-round-trip.py`).
+- v1 generator (`scripts/retired GAPS v1 package builder`).
+- Migrator (`scripts/retired v0-to-v1 migration tool`).
+- Reverse lift (`scripts/retired GAPS lift script`).
+- Round-trip (`scripts/retired GAPS round trip script`).
 - Five v1 reference specs: `gadd`, `compliance-review`,
   `incident-response`, `procurement-approval`,
   `benefits-eligibility-review`. Plus minimal and comprehensive
@@ -29,7 +57,7 @@ reverse lift, and round-trip verification.
 
 ### Changed
 
-- `skills/gaps-author`, `skills/gaps-validate`, and `skills/gaps-generate`
+- `skills/retired GAPS author`, `skills/retired GAPS validate`, and `skills/retired GAPS generate`
   now point at v1 workflows by default.
 
 ### Deprecated

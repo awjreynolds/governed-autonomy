@@ -465,16 +465,16 @@ Once Stage 2 passes:
 
 ```
 DELETE
-skills/gaps-author/, skills/gaps-validate/, skills/gaps-generate/,
-skills/gaps-lift/, skills/gaps-round-trip/
+skills/retired GAPS author/, skills/retired GAPS validate/, skills/retired GAPS generate/,
+skills/retired GAPS lift/, skills/retired GAPS round trip/
 commands/gaps/ (all five .md and .toml)
-scripts/gaps-lift.py, scripts/gaps-round-trip.py
-scripts/gaps_v1_lift/, scripts/gaps_v1_migrator/, scripts/gaps_v1_generator/
-scripts/migrate-gaps-v0-to-v1.py
-scripts/generate-gaps-skill-package.py
-scripts/generate-gaps-skill-package-v1.py
-scripts/validate-gaps.py
-scripts/validate-gaps-implementation.py
+scripts/retired GAPS lift script, scripts/retired GAPS round trip script
+scripts/retired v1 lift package/, scripts/retired v1 migrator package/, scripts/retired v1 generator package/
+scripts/retired v0-to-v1 migration tool
+scripts/retired GAPS package builder
+scripts/retired GAPS v1 package builder
+scripts/retired GAPS v0 validator
+scripts/retired implementation validator
 docs/governed-autonomy/gaps/authoring-guide.md
 docs/governed-autonomy/gaps/generator.md
 docs/governed-autonomy/gaps/round-trip.md
@@ -497,7 +497,7 @@ After Stage 3:
 - One GAPS schema kept internally for `--emit-spec`
 - Two reference processes
 
-Approximately 5,200 lines of Python come out: generator, migrator, lift, round-trip, v0 validator, and validate-gaps-implementation. The schema, validator package, and catalogs stay.
+Approximately 5,200 lines of Python come out: generator, migrator, lift, round-trip, v0 validator, and retired implementation validator. The schema, validator package, and catalogs stay.
 
 ### Not backwards-compatible, not a deprecation window
 

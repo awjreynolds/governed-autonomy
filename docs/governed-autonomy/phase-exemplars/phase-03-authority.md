@@ -10,7 +10,9 @@ Phase 3 establishes the authority surface: what the agent IS allowed to do (defa
 
 ## Accept exemplar
 
-**User input:**
+**Ground-truth dialog outcome:** accept
+
+**User stated answer:**
 
 > "Allowed: draft code changes, run verification (tests, linters, type checks), open pull requests. Prohibited: approve own work, expand scope silently (touching files outside the named feature), merge to main directly. The audit trail is GitHub's PR history; tech_lead is the only one who can grant merge permission. Nothing stops the agent issuing 10 PRs in a row, but each PR still has to clear the pre-merge gate."
 
@@ -31,9 +33,17 @@ Suggested catalog refs the dialog should surface:
 
 ## Reject exemplar 1 (mechanical refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** mechanical-refusal
+
+**User stated answer:**
 
 > "It can write code. That's it."
+
+**Probes the dialog must fire:**
+
+- "What is the affirmative list of actions the agent may take?"
+- "What must the agent never do, even if doing it would seem useful?"
+- "Are there systems, branches, spending limits, or customer-impacting actions that are explicitly off limits?"
 
 **Why this fails (mechanical refusal):**
 
@@ -43,7 +53,9 @@ The dialog explains: "Operating model §2 requires explicit prohibitions. What t
 
 ## Reject exemplar 2 (quality refusal)
 
-**User input:**
+**Ground-truth dialog outcome:** quality-refusal
+
+**User stated answer:**
 
 > "Allowed: do useful things. Prohibited: don't do harmful things."
 

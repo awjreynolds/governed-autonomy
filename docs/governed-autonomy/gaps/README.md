@@ -1,33 +1,15 @@
-# GAPS v1.0.0
+# GAPS v1 Internal Reference
 
-GAPS is the Governed Autonomy Process Specification format. v1.0.0 is a
-machine-validatable, machine-generatable profile for describing governed
-processes that may include autonomous systems.
+GAPS v1 is internal plumbing for `/governed-autonomy:author --emit-spec`. The supported authoring path is the governed-autonomy dialog, which emits `governance.yml`, step skills, and `governance-validation.md`.
 
-## What v1 changes
+Kept reference material:
 
-- **Controlled vocabularies.** Action ids, evidence kinds, and risk
-  patterns are drawn from catalogs in `gaps/catalogs/v1/`. Two authors
-  writing specs for the same process produce structurally comparable
-  YAML.
-- **Typed evidence.** Every evidence reference in a spec resolves to a
-  typed `caseFileItems[]` entry with a shape.
-- **Executable state and gates.** Each lane carries a state machine;
-  each gate carries a decision table. The generator derives skill
-  content from those structures.
-- **OSCAL substrate.** Control mappings reference OSCAL catalog control
-  ids (NIST AI RMF, ISO/IEC 42001 Annex A, EU AI Act). A spec's
-  `controlAssessment` block is a subset OSCAL assessment-plan.
-- **Conformance levels.** `descriptive` -> `machine-validatable` ->
-  `generative`. The level the spec declares is the level the validator
-  enforces.
+- `format.md` documents the retained v1 spec shape.
+- `catalogs.md` documents the retained action, evidence, and risk catalogs.
+- `substrates.md` documents standards-alignment context.
 
-## Pages
+The validator remains available for spec projections:
 
-- [Format reference](format.md)
-- [Catalogs](catalogs.md)
-- [Substrates: OSCAL/CMMN/DMN](substrates.md)
-- [Authoring guide](authoring-guide.md)
-- [Generator](generator.md)
-- [Round-trip](round-trip.md)
-- [Migration from v0.1](migration-from-v0-1.md)
+```bash
+python3 scripts/validate-gaps-v1.py gaps/examples/v1/gadd/ga-process.v1.yml
+```

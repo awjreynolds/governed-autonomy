@@ -1,0 +1,331 @@
+gapsVersion: 1.0.0
+specStatus: draft
+conformanceLevel: descriptive
+process:
+  id: gadd
+  name: "Governed Autonomy for Software Delivery"
+  purpose: >
+    Govern SDLC work from intake through triage, product scope, technical design, planning, implementation, verification, closure, and optional archive cleanup.
+  scope:
+    includes:
+      - "unclassified software-delivery intake"
+      - "product requirement discovery and approval"
+      - "repo-scoped software design"
+      - "implementation planning and decomposition"
+      - "bounded implementation"
+      - "verification and closure"
+      - "optional local archive cleanup"
+    excludes:
+      - "enterprise portfolio planning"
+      - "deployment operations"
+      - "long-term maintenance operations"
+      - "non-software business processes"
+substrate:
+  oscalControlCatalogs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+    - gaps/catalogs/v1/controls/iso-42001-annex-a.json
+    - gaps/catalogs/v1/controls/eu-ai-act-articles.json
+  actionCatalog: gaps/catalogs/v1/actions.yml
+  evidenceCatalog: gaps/catalogs/v1/evidence-kinds.yml
+  riskPatternCatalog: gaps/catalogs/v1/risk-patterns.yml
+roles:
+  - id: process_owner
+    label: "Team or organization adopting GADD"
+    accountabilityScope: "TODO: migrate accountability scope for process_owner from v0.1."
+    decisionRights: []
+  - id: product_authority
+    label: "Product Manager or equivalent product owner"
+    accountabilityScope: "TODO: migrate accountability scope for product_authority from v0.1."
+    decisionRights: []
+  - id: technical_authority
+    label: "EM, Tech Lead, Architect, or senior engineer"
+    accountabilityScope: "TODO: migrate accountability scope for technical_authority from v0.1."
+    decisionRights: []
+  - id: operator
+    label: "Software Engineer or autonomous coding agent inside approved boundary"
+    accountabilityScope: "TODO: migrate accountability scope for operator from v0.1."
+    decisionRights: []
+  - id: reviewer
+    label: "Engineering reviewer or verifier"
+    accountabilityScope: "TODO: migrate accountability scope for reviewer from v0.1."
+    decisionRights: []
+  - id: approver
+    label: "Human approver"
+    accountabilityScope: "TODO: migrate accountability scope for approver from v0.1."
+    decisionRights: []
+  - id: autonomous_system
+    label: "Agent executing bounded GADD skills"
+    accountabilityScope: "TODO: migrate accountability scope for autonomous_system from v0.1."
+    decisionRights: []
+evidenceModel:
+  caseFileItems:
+    - id: migrated-process-state
+      label: "Migrated v0.1 process state placeholder"
+      kind: state-transition-event
+      producer: lane:intake
+      consumer:
+        - role:process_owner
+lanes:
+  - id: intake
+    label: Intake
+    purpose: "Normalize unclassified incoming work and route it safely."
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: medium
+      allowedActions:
+        - update-local-state
+        - project-to-external-system
+      prohibitedActions:
+        - mutate-external-system
+        - route-without-required-evidence
+    stateModel:
+      states:
+        - id: needs_info
+          label: needs_info
+          isInitial: true
+        - id: ready_for_implementation
+          label: ready_for_implementation
+        - id: needs_sdd
+          label: needs_sdd
+        - id: needs_prd
+          label: needs_prd
+        - id: blocked_on_human_decision
+          label: blocked_on_human_decision
+        - id: duplicate
+          label: duplicate
+        - id: out_of_scope
+          label: out_of_scope
+        - id: not_gadd_work
+          label: not_gadd_work
+          isTerminal: true
+      transitions:
+        - id: t-needs-info-to-ready-for-implementation
+          from: needs_info
+          to: ready_for_implementation
+        - id: t-ready-for-implementation-to-needs-sdd
+          from: ready_for_implementation
+          to: needs_sdd
+        - id: t-needs-sdd-to-needs-prd
+          from: needs_sdd
+          to: needs_prd
+        - id: t-needs-prd-to-blocked-on-human-decision
+          from: needs_prd
+          to: blocked_on_human_decision
+        - id: t-blocked-on-human-decision-to-duplicate
+          from: blocked_on_human_decision
+          to: duplicate
+        - id: t-duplicate-to-out-of-scope
+          from: duplicate
+          to: out_of_scope
+        - id: t-out-of-scope-to-not-gadd-work
+          from: out_of_scope
+          to: not_gadd_work
+    autonomousResponsibilities:
+      - observe-process-state
+      - propose-decomposition
+      - propose-route
+    skills:
+      - gadd-triage
+      - gadd-next
+  - id: product_requirement
+    label: "Product Requirement"
+    purpose: "Establish product scope before technical design."
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: medium
+      allowedActions:
+        - draft-artifact
+        - recommend-readiness
+      prohibitedActions:
+        - approve-scope-boundary
+        - expand-scope-silently
+    autonomousResponsibilities:
+      - read-repo-evidence
+      - record-non-goal
+    skills:
+      - gadd-research
+      - gadd-scope
+      - gadd-elaborate
+      - gadd-refine
+      - gadd-approve
+  - id: technical_design
+    label: "Technical Design"
+    purpose: >
+      Convert approved product or engineering boundary into repo-scoped design and implementation plan.
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: high
+      allowedActions:
+        - draft-artifact
+        - propose-route
+      prohibitedActions:
+        - approve-scope-boundary
+        - edit-repository-file-in-boundary
+        - mutate-external-system
+    autonomousResponsibilities:
+      - draft-decision-record
+      - propose-plan
+      - propose-decomposition
+    skills:
+      - gadd-design
+      - gadd-plan
+      - gadd-decompose
+      - gadd-approve
+  - id: implementation
+    label: Implementation
+    purpose: >
+      Execute approved Work Item boundaries with code, tests, docs impact, and evidence.
+    authority:
+      plane: data_plane
+      autonomyTier: execute_with_approval
+      riskTier: medium
+      allowedActions:
+        - edit-repository-file-in-boundary
+        - run-verification
+      prohibitedActions:
+        - bypass-gate
+        - approve-closure
+        - mutate-external-system
+    autonomousResponsibilities:
+      - update-local-state
+      - run-verification
+      - mutate-canonical-state-silently
+      - escalate-to-human
+    skills:
+      - gadd-implement
+  - id: review_and_closure
+    label: "Review And Closure"
+    purpose: "Verify implementation and apply human-approved closure."
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: high
+      allowedActions:
+        - propose-plan
+        - update-local-state
+      prohibitedActions:
+        - close-unverified-work
+        - approve-own-work
+        - approve-gate
+    autonomousResponsibilities:
+      - observe-evidence
+      - propose-plan
+      - recommend-readiness
+      - archive-closed-work
+    skills:
+      - gadd-verify
+      - gadd-close
+      - gadd-archive
+gates:
+  - id: triage_route
+    label: "Triage Route"
+    gateType: validating
+    approvalRole: approver
+    approvalCondition: >
+      Route boundary is approved when downstream work depends on triage outcome.
+    escalationCondition: >
+      Information, evidence, or authority is insufficient for responsible routing.
+  - id: prd_approval
+    label: "Prd Approval"
+    gateType: blocking
+    approvalRole: product_authority
+    approvalCondition: "PRD is review-ready and explicitly approved through /gadd:approve."
+    escalationCondition: >
+      Product goals, users, acceptance criteria, non-goals, or constraints remain unresolved.
+  - id: sdd_approval
+    label: "Sdd Approval"
+    gateType: blocking
+    approvalRole: technical_authority
+    approvalCondition: "SDD is approved through /gadd:approve."
+    escalationCondition: >
+      Architecture, contract, data, security, privacy, or cross-repo questions remain unresolved.
+  - id: plan_approval
+    label: "Plan Approval"
+    gateType: blocking
+    approvalRole: technical_authority
+    approvalCondition: "Plan is approved through /gadd:approve."
+    escalationCondition: "Sequencing, review load, or slice boundaries remain unclear."
+  - id: implementation_boundary
+    label: "Implementation Boundary"
+    gateType: blocking
+    approvalRole: approver
+    approvalCondition: "Implementation starts only after the owning approved boundary exists."
+    escalationCondition: >
+      The implementation requires scope, design, or authority outside the approved boundary.
+  - id: verification
+    label: Verification
+    gateType: validating
+    approvalRole: reviewer
+    approvalCondition: "Verification evidence supports closure readiness."
+    escalationCondition: "Checks, evidence, docs impact, or approved boundary are insufficient."
+  - id: closure
+    label: Closure
+    gateType: blocking
+    approvalRole: approver
+    approvalCondition: "Human approves closure after verification readiness."
+    escalationCondition: "Closure would hide unresolved verification or external drift."
+projectionPolicy:
+  canonicalStateSource: repo-local-ledger
+  pathPattern: "gadd/work-items/**/ledger.yml"
+riskPatterns:
+  - patternRef: chat-as-control-plane
+    mitigations:
+      - "Repo-local ledger remains canonical."
+  - patternRef: unbounded-delegation
+    mitigations:
+      - >
+        Each skill has input gates, rules, stop conditions, and approved boundaries.
+  - patternRef: role-collapse
+    mitigations:
+      - >
+        Product, design, implementation, verification, and closure are separate lanes.
+  - patternRef: evidence-drift
+    mitigations:
+      - >
+        PRD, SDD, plan, implementation evidence, verification report, and ledger events record evidence.
+  - patternRef: approval-theater
+    mitigations:
+      - "/gadd:approve approves specific PRD, SDD, and plan gates."
+  - patternRef: tool-sprawl
+    mitigations:
+      - "External trackers are projections, not canonical state."
+  - patternRef: accountability-gaps
+    mitigations:
+      - "Human roles own product, technical, review, and closure decisions."
+  - patternRef: scope-creep-at-machine-speed
+    mitigations:
+      - "Approved boundaries and stop conditions force boundary resets."
+  - patternRef: post-hoc-governance
+    mitigations:
+      - "GADD introduces gates before implementation and closure."
+controlAssessment:
+  catalogRefs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+    - gaps/catalogs/v1/controls/iso-42001-annex-a.json
+    - gaps/catalogs/v1/controls/eu-ai-act-articles.json
+  controlImplementations:
+    - controlId: GOVERN-1.4
+      mappingStatus: partial
+      statement: >
+        Migrated from v0.1. Review and refine before declaring machine-validatable conformance.
+    - controlId: A.5.4
+      mappingStatus: planned
+      statement: >
+        Migrated from v0.1. Review and refine before declaring machine-validatable conformance.
+    - controlId: Art.26
+      mappingStatus: not-applicable
+      statement: >
+        Migrated from v0.1. Review and refine before declaring machine-validatable conformance.
+freshness:
+  reviewedAt: "2026-05-19"
+  driftPolicy: >
+    Migrated from v0.1. Review and uplift to machine-validatable conformance before relying on this spec.
+knownGaps:
+  - id: migrated-from-v0-1
+    summary: >
+      Spec was migrated mechanically from v0.1. Many fields are placeholders; uplift before declaring machine-validatable.
+    severity: important
+    plannedResolution: manual-port-review
