@@ -5,6 +5,14 @@ description: Use when the user says /gaps:generate, wants to generate skills fro
 
 # /gaps:generate
 
+## GAPS v1 (preferred)
+
+Generate v1 skill packages with `python3 scripts/generate-gaps-skill-package-v1.py <spec>`. The spec must be at `conformanceLevel: generative`. Pass `--validate-after` to confirm before generation.
+
+After generation, verify the package with `python3 scripts/gaps-round-trip.py <spec>`.
+
+The v0.1 generator below is retained for the deprecation window. v1 packages must not be hand-edited; regenerate from the spec instead.
+
 Generate a reviewable skill-package skeleton from one GAPS process specification.
 
 This command is a standalone, agent-agnostic GAPS command. Follow this file directly; do not require any other installed skill.
