@@ -738,6 +738,8 @@ python3 scripts/validate-gaps-v1.py gaps/examples/v1/benefits-eligibility-review
 
 If errors are reported, fix them in the spec before promoting. Likely fixes: every lane's evidenceInputs items have `shape.required` non-empty, every blocking gate has a `decision` block (already true in Phase 3), every transition has a `guard` (already true in Phase 3).
 
+Execution note: the pilot spec did report one generative-conformance error here. `evidence_gathering_lane` transition `t-in-progress-to-complete` lacked a guard. Phase 4 fixed that transition guard before promoting the spec.
+
 - [ ] **Step 2: Update the spec's conformance level**
 
 Replace the line `conformanceLevel: machine-validatable` with `conformanceLevel: generative` in `gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml`.

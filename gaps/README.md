@@ -52,7 +52,7 @@ The v1 reference set lives under `gaps/examples/v1/`:
 - `compliance-review/` — adaptive compliance review, migrated from v0.1 at descriptive conformance.
 - `incident-response/` — incident handling, migrated from v0.1 at descriptive conformance.
 - `procurement-approval/` — procurement approvals, migrated from v0.1 at descriptive conformance.
-- `benefits-eligibility-review/` — public-sector casework reference, authored fresh at machine-validatable conformance.
+- `benefits-eligibility-review/` — public-sector casework reference, authored fresh and promoted to generative conformance.
 - `minimal/` — schema smoke-test fixture at descriptive conformance.
 - `comprehensive/` — validator coverage fixture at machine-validatable conformance.
 
@@ -65,6 +65,16 @@ python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/<process-id>/ga-process.y
 The migrator always emits `conformanceLevel: descriptive`. Uplift to
 `machine-validatable` and `generative` deliberately, recording the
 review in `freshness.driftPolicy`.
+
+### v1 generator
+
+A generative-conformance spec drives the generator:
+
+```bash
+python3 scripts/generate-gaps-skill-package-v1.py gaps/examples/v1/benefits-eligibility-review/ga-process.v1.yml --output-root gaps/generated/benefits-eligibility-review --validate-after
+```
+
+The pilot package lives at `gaps/examples/v1/benefits-eligibility-review/expected/`. The generator produces a deterministic byte-identical package for unchanged input.
 
 OSCAL JSON files are generated from compact YAML sources under
 `gaps/catalogs/v1/controls/sources/`. Regenerate after editing a source:
