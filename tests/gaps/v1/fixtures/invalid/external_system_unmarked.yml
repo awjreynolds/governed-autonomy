@@ -1,0 +1,71 @@
+gapsVersion: "1.0.0"
+specStatus: draft
+conformanceLevel: descriptive
+
+process:
+  id: invalid-external-system-unmarked
+  name: Invalid fixture - external system without approval gate
+  purpose: Triggers authority rule for unmarked external system.
+  scope:
+    includes: [test fixture]
+    excludes: [any real process]
+
+substrate:
+  oscalControlCatalogs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+  actionCatalog: gaps/catalogs/v1/actions.yml
+  evidenceCatalog: gaps/catalogs/v1/evidence-kinds.yml
+  riskPatternCatalog: gaps/catalogs/v1/risk-patterns.yml
+
+roles:
+  - id: process_owner
+    label: Process owner
+    accountabilityScope: Test fixture only.
+
+evidenceModel:
+  caseFileItems:
+    - id: dummy-evidence
+      kind: context-observation
+      label: Dummy
+      producer: lane:single_lane
+      consumer:
+        - role:process_owner
+
+lanes:
+  - id: single_lane
+    label: Single lane
+    purpose: Test only.
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: low
+      allowedActions:
+        - draft-artifact
+      prohibitedActions:
+        - approve-own-work
+    skills:
+      - test-fixture-skill
+
+gates: []
+
+projectionPolicy:
+  canonicalStateSource: repo-local-ledger
+  pathPattern: state/**
+  externalSystems:
+    - kind: jira
+      role: projection-target
+      mutationRequiresApproval: false
+
+riskPatterns:
+  - patternRef: tool-sprawl
+    mitigations: [N/A]
+
+controlAssessment:
+  catalogRefs: []
+  controlImplementations: []
+
+freshness:
+  reviewedAt: "2026-05-18"
+  driftPolicy: Test fixture.
+
+knownGaps: []

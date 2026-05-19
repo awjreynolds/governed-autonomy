@@ -45,7 +45,7 @@ def main() -> int:
     catalog_refs.check(spec, args.spec, report)
     state_machine.check(spec, report)
     gate_decisions.check(spec, report)
-    authority.check(spec, report)
+    authority.check(spec, report, args.spec)
     oscal_refs.check(spec, args.spec, report)
     conformance.check(spec, args.level, report)
 
