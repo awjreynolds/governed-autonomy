@@ -86,13 +86,15 @@ authority:
   default_autonomy_tier: draft
   allowed_actions:
     - catalog:action:draft-artifact
-    - catalog:action:run-tests
+    - catalog:action:run-verification
     - local:open-pr
   prohibited_actions:
     - catalog:action:approve-own-work
-    - catalog:action:merge-to-main
+    - catalog:action:expand-scope-silently
+    - local:merge-to-main
   local_definitions:
-    open-pr: Open a pull request against the integration branch.
+    open-pr: Open a pull request against the integration branch with the drafted change set.
+    merge-to-main: Push or merge any commit onto the main branch directly without an approved gate.
 
 input_gates:
   - A linked spec or ticket exists.
@@ -101,25 +103,31 @@ input_gates:
 risk:
   patterns:
     - catalog:risk:post-hoc-governance
-    - catalog:risk:silent-scope-expansion
+    - catalog:risk:scope-creep-at-machine-speed
   blast_radius: production-code
 
 evidence:
   destination: repo
   items:
-    - id: design-doc
-      kind: catalog:evidence:design-artifact
+    - id: design-record
+      kind: catalog:evidence:design-decision
       producer: step:design
+      consumer: [role:tech_lead]
+    - id: verification-record
+      kind: catalog:evidence:verification-finding
+      producer: step:implement
       consumer: [role:tech_lead]
 
 gates:
   - id: pre-merge
-    requires_role: tech_lead
-    requires_evidence: [design-doc, test-report]
-    blocks_steps: [merge, deploy]
+    requires_role: role:tech_lead
+    requires_evidence: [evidence:design-record, evidence:verification-record]
+    blocks_steps: [step:merge]
 
 escalation:
   - condition: scope-change-detected
+    to: role:tech_lead
+  - condition: verification-fails-after-3-retries
     to: role:tech_lead
 
 state:
@@ -133,15 +141,24 @@ freshness:
 steps:
   - id: design
     label: Design
-    purpose: Produce a design doc for the feature.
+    purpose: Produce a design record describing the change and its reversibility.
     step_kind: execute
   - id: investigate-risk
     label: Investigate risk
-    purpose: Identify reversibility constraints before implementation.
+    purpose: Read code paths and external dependencies to identify reversibility constraints.
     step_kind: investigate
+    authority_overrides:
+      allowed_actions:
+        - catalog:action:gather-context
+        - catalog:action:read-repo-evidence
+        - catalog:action:read-external-system-state
+  - id: implement
+    label: Implement
+    purpose: Draft the code change and run verification.
+    step_kind: execute
   - id: merge
     label: Merge
-    purpose: Merge to integration branch after gate passes.
+    purpose: Merge to integration branch after pre-merge gate passes.
     step_kind: approve
     authority_overrides:
       autonomy_tier: human_only
@@ -152,10 +169,12 @@ knownGaps: []
 
 Conventions:
 
-- **Namespaced refs** — `catalog:…`, `local:…`, `role:…`, `step:…`, `lane:…`. Cheap to lint; no implicit lookup ambiguity.
-- **`local_definitions` required for `local:` refs** — every local term must have an inline definition.
+- **Namespaced refs everywhere** — `catalog:…`, `local:…`, `role:…`, `step:…`, `lane:…`, `evidence:…`. Every internal reference uses a prefix. No bare ids inside the file.
+- **`local_definitions` required for `local:` refs** — every local term must have an inline definition of at least 20 characters.
+- **Step-level action overrides** — `steps[*].authority_overrides` may set `autonomy_tier`, `allowed_actions`, `prohibited_actions`. Step authority is `process default ⊕ step override` (override wins on conflict).
+- **Autonomy tier lattice** (least to most permissive): `human_only < assist < recommend < draft < execute_with_approval < execute_within_limits < autonomous_with_monitoring`. Used by `W005` to detect step-level escalation of autonomy.
 - **One file per process** — process-level decisions belong together; splitting per-step creates drift.
-- **`warnings:` and `knownGaps:` persisted** — written by the lint command and dialog so the next reader sees them without re-running anything.
+- **`warnings:` and `knownGaps:` persisted by the author skill**, not by lint. Lint produces output; author reads lint output and writes warnings into the file. Lint itself is pure read.
 - **No state machines, no FEEL expressions, no DMN tables, no OSCAL refs** — added only when a real user proves they need them.
 
 ### SKILL.md per step
@@ -190,7 +209,7 @@ You must not: ...
 [normal skill body]
 ```
 
-The prose body restates governance constraints inline so the runtime LLM sees them. The YAML is for tooling. Both must agree; `ga-lint` checks this.
+The YAML is the canonical source for tooling. The prose body restates governance constraints inline so the runtime LLM sees them at execution time. Disagreement between the two is a semantic issue, not a mechanical one — `governed-autonomy:critique` flags prose/YAML drift; `ga-lint` does not, because freeform prose cannot be deterministically compared to structured YAML.
 
 ### governance-validation.md
 
@@ -253,13 +272,28 @@ Each phase is a small loop, not a single question:
 
 Quality refusal is what catches "passes validation, fails in production." Contradictions that don't touch core fields are recorded in `governance-validation.md` as unresolved items and proceed.
 
+### Phase exemplars (the implementable form of "load-bearing")
+
+The dialog does not use a binary rubric — that would rebuild the false-confidence problem the GAPS validator created. Instead, each phase has a set of exemplars showing what the dialog should probe for and what counts as accept vs reject. Exemplars are part of the spec, are testable as fixtures (run them through the implemented dialog and check the outcome), and are the closest implementable form of "doesn't survive grilling."
+
+A worked exemplar for Phase 2 (Roles & accountability):
+
+- **Probes the dialog must fire** (any answer must survive at least one):
+  - "If <role> is accountable, what specifically can be revoked from them when this process fails?"
+  - "Who can actually page <role> at 2am? What's the route?"
+  - "What happens when <role> is on vacation? Who owns it then?"
+- **Accept example**: "tech_lead is accountable. Failure means the on-call rotation pages them via PagerDuty. Vacation handoff is documented in the team runbook; deputy is staff_engineer. The merge bit can be revoked from their GitHub team membership."
+- **Reject example (quality refusal fires)**: "The engineering team is accountable for everything." → probes surface no concrete revocation, no paging route, no handoff. Quality refusal: "accountable_for is populated but no concrete accountability mechanism survived probing."
+
+Each phase ships with one accept exemplar and one reject exemplar in the spec. The author skill's implementation tests run those exemplars through the dialog and check that the dialog accepts the accept-exemplar and refuses the reject-exemplar. The exemplars themselves live in `docs/governed-autonomy/phase-exemplars/`. Full exemplar set is out of scope for this design doc and is the first deliverable of the implementation plan.
+
 ### Help and research when the user is stuck
 
 Three modes the dialog can offer at any "I don't know" or quality-refusal moment:
 
 1. **Brainstorm** — propose 2–3 candidate answers with tradeoffs and a recommendation. Used when the user has the knowledge but hasn't formalized it.
 2. **Local research** — read the repo, prior `governance.yml` files, referenced docs. Used when the information exists in the workspace.
-3. **External research** — use Exa web search for authoritative sources. Used for standards, regulations, industry practice.
+3. **External research** — use whatever external web search the host agent has available (provider-agnostic; no hard dependency on any specific search service). Used for standards, regulations, industry practice. If no external search is available, the dialog says so and falls back to brainstorm or local research.
 
 The dialog offers the modes when about to refuse; the user can always type the answer to skip the offer. Sources go into `governance-validation.md`.
 
@@ -276,25 +310,25 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 
 ## Lint rules
 
-`ga-lint` is a deterministic Python CLI (~150 lines target, no LLM). Reads `governance.yml` and the skills directory; writes nothing except optional `--json` output. Exits non-zero on errors; warnings don't fail the command.
+`ga-lint` is a deterministic Python CLI (~150 lines target, no LLM). Reads `governance.yml` and the skills directory; writes nothing to disk (output goes to stdout/stderr; optional `--json` flag changes the format). Exits non-zero on errors; warnings don't fail the command. Mutating `governance.yml` to persist `warnings:` is the author skill's job, not lint's.
 
 ### Errors
 
 | Rule | Check |
 |---|---|
-| `E001` core-field-missing | `process.id`, `process.name`, `roles`, `authority.allowed_actions` OR `authority.prohibited_actions`, `evidence.destination`, at least one `escalation` entry |
+| `E001` core-field-missing | `process.id`, `process.name`, `roles`, `authority.allowed_actions` AND `authority.prohibited_actions` (both non-empty), `evidence.destination`, at least one `escalation` entry. Both sides of authority must be populated because "what the agent must not do" is load-bearing on its own; missing it produces ungoverned actions by omission. |
 | `E002` accountable-role-absent | At least one role has `accountable_for` that is not `nothing`/empty |
 | `E003a` catalog-ref-missing | A `catalog:` ref does not exist in the referenced catalog |
 | `E003b` local-ref-undefined | A `local:` ref has no entry in `local_definitions` or its definition is under 20 chars |
-| `E003c` internal-ref-missing | A `role:`/`step:`/`lane:` ref does not exist in the file |
-| `E004` self-approval | A role appears as both producer and approver of the same evidence item or gate |
+| `E003c` internal-ref-missing | A `role:`/`step:`/`lane:`/`evidence:` ref does not exist in the file |
+| ~~`E004`~~ | Self-approval detection is moved to the critique skill. Lint cannot detect it deterministically without a `steps[*].executed_by` field, which this design declines to add. Critique catches it semantically. |
 | `E005` action-conflict | Same action in both `allowed_actions` and `prohibited_actions` after step-override merge |
 | `E006` step-without-skill | A `steps[*].id` has no matching `skills/<step-id>/SKILL.md` |
 | `E007` skill-without-step | A `skills/<id>/SKILL.md` has no matching entry in `steps` |
 | `E008` frontmatter-mismatch | A `SKILL.md` `governance.step` doesn't resolve, or `governance.process` path doesn't resolve to this file |
 | `E009` agent-accountable | A role with `autonomous: true` has non-empty `accountable_for` (operating model: agents do not own accountability) |
 | `E010` dead-gate | A gate requires evidence that no step produces |
-| `E011` investigate-with-write | A `step_kind: investigate` step lists any non-read action |
+| `E011` investigate-with-write | A `step_kind: investigate` step (after merging process-level and step-level authority) lists any action whose catalog `category` is not `data-plane-read`, `meta`, or read-only |
 
 ### Warnings
 
@@ -336,7 +370,7 @@ JSON output via `--json` for CI use.
 
 ## Critique skill
 
-`governed-autonomy:critique` is read-only. Reads an existing skill, skill set, or process directory; produces `governance-review.md` in the target's directory. Same operating-model concerns and same grill-me stance as the author skill, inverted.
+`governed-autonomy:critique` does not modify reviewed artifacts. It reads an existing skill, skill set, or process directory and writes a single sidecar file — `governance-review.md` — in the target's directory. Same operating-model concerns and same grill-me stance as the author skill, inverted.
 
 Findings taxonomy:
 
@@ -354,31 +388,52 @@ The critique skill can run against material that has no `governance.yml` at all 
 
 ### Stage 1 — Build alongside (no deletions)
 
-Add:
+Add skills and scripts:
 
 ```
 skills/governed-autonomy-critique/SKILL.md
 skills/governed-autonomy-author/SKILL.md
 scripts/ga_lint/                              Python package, ~150 lines
 scripts/ga-lint                               CLI entry point
+```
+
+Add commands and manifest entries (this is how slash commands route in this repo — `agent-skills.json` is the canonical registry):
+
+```
+commands/governed-autonomy/author.md
+commands/governed-autonomy/author.toml
+commands/governed-autonomy/critique.md
+commands/governed-autonomy/critique.toml
+commands/governed-autonomy/lint.md
+commands/governed-autonomy/lint.toml
+agent-skills.json                             add /governed-autonomy:author, :critique, :lint entries
+gemini-extension.json                         add equivalents for Gemini routing
+README.md                                     update Quick start to lead with /governed-autonomy:author
+```
+
+Add docs:
+
+```
 docs/governed-autonomy/authoring-dialog.md
 docs/governed-autonomy/governance-sidecar.md
 docs/governed-autonomy/critique.md
 docs/governed-autonomy/lint.md
+docs/governed-autonomy/phase-exemplars/       one file per phase, with probes + accept/reject examples
 ```
 
 Repurpose (no code change, change use sites only): catalogs and operating-model docs become dialog content.
 
-Demote to internal (remove from README, remove slash commands, remove SKILL entry points): GAPS schema, validator, validate-gaps-v1.py.
+Demote to internal (remove from `agent-skills.json` and `gemini-extension.json`, remove slash commands, remove SKILL entry points): GAPS schema, validator, `validate-gaps-v1.py`. The skill packages under `skills/gaps-*/` stay on disk through Stage 2 but are no longer registered as user-facing commands.
 
 ### Stage 2 — Validate new flow
 
 Acceptance criteria before deleting anything:
 
-- Critique catches at least one substantive finding per target (run against five v1 reference specs, GADD reference package, two external skills) that wasn't already in the target's `knownGaps:`
-- Author skill produces `governance.yml` + skills set for at least one new process from cold start
-- Author skill round-trips a retrofit on an existing GADD skill
-- `ga-lint` runs in under 1 second on all generated artifacts
+- **Golden critique fixtures**: three target artifacts (one v1 reference spec, the GADD reference package, one external skill) each have a ground-truth `governance-review.md` written by hand with expected finding ids and severities. The critique skill must produce findings whose ids match ground-truth at ≥80% rate (correct id + correct severity tier). Spurious findings beyond ground-truth are not failures but are reported.
+- **Author skill cold-start fixture**: one new process is authored end-to-end from cold start; the resulting `governance.yml` passes `ga-lint` with zero errors; phase exemplar acceptance tests (accept-exemplar accepted, reject-exemplar refused) pass for every phase.
+- **Author skill retrofit fixture**: an existing GADD skill is retrofitted; the dialog reads it, produces a `governance.yml`, and the merged process passes `ga-lint`.
+- **Phase exemplar tests**: every phase's accept-exemplar produces accept; every reject-exemplar produces quality refusal.
+- **`ga-lint` performance**: under 1 second on all generated artifacts and on `gaps/examples/v1/*` directories.
 
 ### Stage 3 — Delete
 
@@ -445,13 +500,20 @@ Build the critique skill first. Run it against:
 
 Measure: does the operating-model question set produce useful findings on real material? If yes, the author skill is critique-in-reverse — same questions, opposite direction. If no, the question set needs revision before authoring is built on it.
 
+## State persistence (v1 decision)
+
+Dialog state for v1 lives in the host agent's conversation context for a single authoring session. Phase answers, accepted claims, probe outcomes, and contradictions are tracked in-conversation by the author skill itself (using TaskCreate or equivalent host-agent state, plus the running message history). Files are written only at emit phase 11.
+
+Cross-session resumption — picking up an interrupted authoring session in a new conversation — is **deferred to a later version**. The dialog will not write partial `governance.yml` mid-session, and abandoning a session loses the dialog state. Users who need to pause mid-authoring can ask the dialog to emit a `governance-draft.md` with current answers, but this is opt-in and not a supported resume path.
+
+This is an architectural constraint that the implementation plan inherits. It is not negotiable in the plan; changing it requires returning to design.
+
 ## Open questions for implementation
 
 These belong in the implementation plan, not this design:
 
 - File structure of the author skill (one SKILL.md or SKILL.md + sub-files per phase)
-- How the dialog persists state across turns within a single authoring session
 - Whether `governance-validation.md` is committed to git by default or gitignored
 - Format of the `--emit-spec` flag invocation and where the spec file is written
 - How `ga-lint` discovers `governance.yml` files when invoked without an argument
-- Test harness for grill-me probe quality (does each phase's probes actually push back on under-specified answers?)
+- Test harness format for phase exemplar fixtures (does each phase's exemplars actually round-trip through the dialog with the expected accept/reject outcome?)
