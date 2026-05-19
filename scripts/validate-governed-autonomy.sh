@@ -10,6 +10,9 @@ python3 scripts/validate-gaps.py
 echo "==> Validating GAPS v0.1 GADD implementation map"
 python3 scripts/validate-gaps-implementation.py
 
+echo "==> Checking GAPS v1 OSCAL catalogs are up to date with sources"
+python3 scripts/build-oscal-catalogs.py --check
+
 echo "==> Validating GAPS v1 catalogs"
 python3 scripts/validate-catalogs.py
 

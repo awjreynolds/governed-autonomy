@@ -31,7 +31,10 @@ deprecation window and uses a separate validator, schema, and catalogs:
 
 - `gaps/schema/v1/` — v1 JSON Schemas (ga-process + catalog meta-schemas).
 - `gaps/catalogs/v1/` — controlled vocabularies (actions, evidence kinds,
-  risk patterns). OSCAL control catalogs follow in Phase 1b.
+  risk patterns).
+- `gaps/catalogs/v1/controls/` — OSCAL control catalogs (NIST AI RMF,
+  ISO/IEC 42001 Annex A, EU AI Act) generated from compact YAML sources
+  via `scripts/build-oscal-catalogs.py`.
 - `gaps/examples/v1/` — v1 reference specs.
 - `scripts/validate-gaps-v1.py` — v1 structural schema validator.
 - `scripts/validate-catalogs.py` — catalog meta-validator.
@@ -40,6 +43,16 @@ v1.0.0 adopts OSCAL structurally for evidence and control mappings, and
 adopts CMMN case-and-stage and DMN decision-table concepts conceptually in
 GAPS-native YAML. See `docs/superpowers/specs/2026-05-18-gaps-v1-0-0-design.md`
 for the full architecture.
+
+OSCAL JSON files are generated from compact YAML sources under
+`gaps/catalogs/v1/controls/sources/`. Regenerate after editing a source:
+
+```bash
+python3 scripts/build-oscal-catalogs.py
+```
+
+CI runs `python3 scripts/build-oscal-catalogs.py --check` to detect drift
+between sources and committed JSON.
 
 ## Relationship to existing standards
 
