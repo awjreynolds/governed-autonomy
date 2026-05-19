@@ -56,6 +56,8 @@ def render_implementation_map(
             "value": fingerprint,
         },
         "laneImplementations": lane_impls,
+        "gates": [gate["id"] for gate in ctx.spec.get("gates", []) or []],
+        "evidenceModel": [item["id"] for item in ctx.spec.get("evidenceModel", {}).get("caseFileItems", []) or []],
         "controlPlaneActions": list(ctx.spec.get("controlPlaneActions", []) or []),
     }
     # YAML emit: defer to v1 migrator renderer for stability.
