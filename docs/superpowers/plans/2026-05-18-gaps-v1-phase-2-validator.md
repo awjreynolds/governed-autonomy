@@ -2605,7 +2605,7 @@ knownGaps: []
 python3 -m unittest tests.gaps.v1.test_conformance -v
 ```
 
-Expected: failure on all three tests since stub.
+Expected: failure on the two generative conformance tests since stub; the descriptive minimal fixture may already pass because descriptive adds no conformance requirements.
 
 - [ ] **Step 4: Implement `conformance.check`**
 
