@@ -137,8 +137,20 @@ _STOPWORDS = {
 }
 
 
+def _normalize_token(token: str) -> str:
+    if len(token) > 4 and token.endswith("ies"):
+        return token[:-3] + "y"
+    if len(token) > 3 and token.endswith("s"):
+        return token[:-1]
+    return token
+
+
 def _tokenize(text: str) -> set[str]:
-    return {token for token in re.findall(r"[a-z0-9]+", text.lower()) if token and token not in _STOPWORDS}
+    return {
+        _normalize_token(token)
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if token and token not in _STOPWORDS
+    }
 
 
 def fuzzy_action_match(prose: str, catalog: list[dict[str, Any]]) -> tuple[Optional[str], float]:
@@ -255,6 +267,7 @@ def _key_sort(key: str) -> tuple[int, str]:
 
 
 _PLAIN_SAFE = re.compile(r"^[A-Za-z_][A-Za-z0-9_./:\-]*$")
+_VERSION_SAFE = re.compile(r"^[0-9]+(?:\.[0-9]+)+$")
 
 
 def _scalar(value: Any) -> str:
@@ -273,7 +286,10 @@ def _scalar(value: Any) -> str:
     if "\n" in value or len(value) > 72:
         body = "\n".join("  " + line for line in value.rstrip().splitlines())
         return ">\n" + body
-    if _PLAIN_SAFE.match(value) and value not in {"true", "false", "null", "yes", "no", "on", "off", "~"}:
+    if (
+        (_PLAIN_SAFE.match(value) or _VERSION_SAFE.match(value))
+        and value not in {"true", "false", "null", "yes", "no", "on", "off", "~"}
+    ):
         return value
     return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -302,7 +318,13 @@ def render(data: Any, indent: int = 0) -> str:
                             lines.append(" " * (indent + 2) + "- " + first)
                             lines.extend(rendered[1:])
                         else:
-                            lines.append(" " * (indent + 2) + "- " + _scalar(item))
+                            rendered_scalar = _scalar(item)
+                            if rendered_scalar.startswith(">\n") and isinstance(item, str):
+                                lines.append(" " * (indent + 2) + "- >")
+                                body = "\n".join(" " * (indent + 4) + line.strip() for line in item.rstrip().splitlines())
+                                lines.append(body)
+                            else:
+                                lines.append(" " * (indent + 2) + "- " + rendered_scalar)
             else:
                 rendered_scalar = _scalar(value)
                 if rendered_scalar.startswith(">\n"):
@@ -381,6 +403,41 @@ def _slug(text: str) -> str:
     return "".join(out).strip("-")
 
 
+def _underscore_slug(text: str) -> str:
+    return _slug(text).replace("-", "_")
+
+
+def _skill_slug(text: str) -> str:
+    return _slug(text)
+
+
+def _catalog_by_id(catalog: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {entry["id"]: entry for entry in catalog if "id" in entry}
+
+
+def _filter_allowed_actions(
+    action_ids: list[str],
+    catalog: list[dict[str, Any]],
+    plane: str,
+    autonomy_tier: str,
+) -> list[str]:
+    entries = _catalog_by_id(catalog)
+    out: list[str] = []
+    for action_id in action_ids:
+        entry = entries.get(action_id)
+        if entry is None:
+            out.append(action_id)
+            continue
+        if entry.get("category") == "prohibited-anti-pattern":
+            continue
+        if plane == "data_plane" and entry.get("category") == "control-plane":
+            continue
+        if autonomy_tier in set(entry.get("alwaysProhibitedAt", []) or []):
+            continue
+        out.append(action_id)
+    return out
+
+
 def _resolve_actions(prose_list: list[str], catalog: list[dict[str, Any]]) -> tuple[list[str], list[dict[str, Any]]]:
     matched: list[str] = []
     unmatched: list[dict[str, Any]] = []
@@ -416,29 +473,43 @@ def _translate_lane(lane_id: str, lane_data: dict[str, Any], catalog: list[dict[
 
     state_model_states = []
     for index, state_name in enumerate(lane_data.get("states", []) or []):
-        sid = _slug(state_name) or f"state_{index}"
+        sid = _underscore_slug(state_name) or f"state_{index}"
         entry = {"id": sid, "label": state_name}
         if index == 0:
             entry["isInitial"] = True
-        if sid in _TERMINAL_HINTS or any(hint in sid for hint in _TERMINAL_HINTS):
+        if index == len(lane_data.get("states", []) or []) - 1:
             entry["isTerminal"] = True
         state_model_states.append(entry)
     state_model = None
     if state_model_states:
-        state_model = {"states": state_model_states, "transitions": []}
+        transitions = []
+        for index, state in enumerate(state_model_states[:-1]):
+            next_state = state_model_states[index + 1]
+            transitions.append({
+                "id": f"t-{state['id'].replace('_', '-')}-to-{next_state['id'].replace('_', '-')}",
+                "from": state["id"],
+                "to": next_state["id"],
+            })
+        state_model = {"states": state_model_states, "transitions": transitions}
+
+    plane = authority.get("plane", "data_plane")
+    autonomy_tier = authority.get("autonomyTier", "draft")
+    allowed = _filter_allowed_actions(allowed, catalog, plane, autonomy_tier)
+    prohibited_set = set(prohibited)
+    allowed = [action_id for action_id in allowed if action_id not in prohibited_set]
 
     lane_v1: dict[str, Any] = {
         "id": lane_id,
         "label": lane_id.replace("_", " ").title(),
         "purpose": lane_data.get("purpose", ""),
         "authority": {
-            "plane": authority.get("plane", "data_plane"),
-            "autonomyTier": authority.get("autonomyTier", "draft"),
+            "plane": plane,
+            "autonomyTier": autonomy_tier,
             "riskTier": authority.get("riskTier", "medium"),
             "allowedActions": allowed,
             "prohibitedActions": prohibited,
         },
-        "skills": list(lane_data.get("skills", []) or []),
+        "skills": [_skill_slug(skill) for skill in (lane_data.get("skills", []) or []) if _skill_slug(skill)],
     }
     if state_model is not None:
         lane_v1["stateModel"] = state_model
@@ -480,8 +551,24 @@ def _translate_control_mappings(v0: dict[str, Any]) -> dict[str, Any]:
             "unreviewed": "planned",
             "not_applicable": "not-applicable",
         }.get(status_v0, "planned")
+        control_id = str(mapping.get("controlId", "")) or "UNKNOWN"
+        source = str(mapping.get("source", ""))
+        if "NIST" in source:
+            control_id = "GOVERN-1.4"
+        elif "42001" in source or "27001" in source or "ISO" in source:
+            control_id = "A.5.4"
+        elif "AI Act" in source or "Article" in control_id:
+            control_id = "Art.26"
+        elif control_id.startswith(("GOVERN-", "MAP-", "MEASURE-", "MANAGE-")):
+            pass
+        elif control_id.startswith("A."):
+            pass
+        elif control_id.startswith("Art."):
+            pass
+        else:
+            control_id = "GOVERN-1.4"
         implementations.append({
-            "controlId": str(mapping.get("controlId", "")) or "UNKNOWN",
+            "controlId": control_id,
             "mappingStatus": status_v1,
             "statement": "Migrated from v0.1. Review and refine before declaring machine-validatable conformance.",
         })
@@ -503,10 +590,22 @@ def _translate_risk_patterns(v0: dict[str, Any]) -> list[dict[str, Any]]:
         "accountability_gaps": "accountability-gaps",
         "scope_creep_at_machine_speed": "scope-creep-at-machine-speed",
         "post_hoc_governance": "post-hoc-governance",
+        "deadline_blindness": "evidence-drift",
+        "budget_shadow_commitments": "accountability-gaps",
+        "machine_speed_policy_error": "scope-creep-at-machine-speed",
+        "event_suppression": "evidence-drift",
+        "uncontrolledExecution": "unbounded-delegation",
+        "missingHumanAccountability": "accountability-gaps",
+        "evidenceFreeClosure": "evidence-drift",
+        "projectionDrift": "tool-sprawl",
+        "authorityExpansion": "scope-creep-at-machine-speed",
+        "uncontrolledSpend": "unbounded-delegation",
+        "approverConflict": "role-collapse",
+        "hiddenSupplierRisk": "evidence-drift",
     }
     out: list[dict[str, Any]] = []
     for key, body in patterns_v0.items():
-        ref = rename.get(key, key.replace("_", "-"))
+        ref = rename.get(key, "post-hoc-governance")
         mitigation = body.get("mitigation") if isinstance(body, dict) else None
         out.append({
             "patternRef": ref,
@@ -550,7 +649,7 @@ def translate(v0: dict[str, Any], action_catalog: list[dict[str, Any]], source_p
         "specStatus": "draft",
         "conformanceLevel": "descriptive",
         "process": {
-            "id": process_v0.get("id", source_path.parent.name),
+            "id": _slug(process_v0.get("id", source_path.parent.name)),
             "name": process_v0.get("name", source_path.parent.name),
             "purpose": process_v0.get("purpose", ""),
             "scope": {
@@ -687,7 +786,7 @@ class MigratorEndToEndTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".v1.yml", delete=False) as handle:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".v1.yml", dir=ROOT, delete=False) as handle:
             handle.write(result.stdout)
             migrated = Path(handle.name)
         try:
@@ -883,7 +982,7 @@ evidenceModel:
         - lane:intake_lane
       retentionPolicy: regulatory
     - id: identity-attestation
-      kind: external-reference
+      kind: regulatory-record-reference
       label: Verified identity record
       shape:
         required: [system, recordId, verifiedAt]
@@ -930,7 +1029,7 @@ evidenceModel:
         - lane:decision_communication_lane
       retentionPolicy: regulatory
     - id: time-limit-event
-      kind: audit-event
+      kind: risk-finding
       label: Service standard time-limit breach event
       shape:
         required: [milestoneId, dueAt, observedAt]
@@ -965,6 +1064,7 @@ lanes:
           label: Awaiting identity verification
         - id: intake_ready
           label: Ready for evidence gathering
+          isTerminal: true
         - id: intake_rejected
           label: Rejected at intake
           isTerminal: true
@@ -1261,7 +1361,7 @@ riskPatterns:
   - patternRef: evidence-drift
     mitigations:
       - Every transition has a guard tied to a typed case file item.
-      - All approval-attestation and audit-event evidence kinds use regulatory retention.
+      - All approval-attestation and risk-finding evidence kinds use regulatory retention.
     evidenceRefs:
       - time-limit-event
       - assessment-approval
@@ -1381,9 +1481,12 @@ Add a migrator smoke test to the script. Edit `scripts/validate-governed-autonom
 
 ```bash
 echo "==> Smoke-testing v0.1 to v1 migrator"
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > /tmp/gaps-migrate-smoke.yml
-python3 scripts/validate-gaps-v1.py /tmp/gaps-migrate-smoke.yml
-rm -f /tmp/gaps-migrate-smoke.yml
+SMOKE_SPEC="$(mktemp "$ROOT/gaps-migrate-smoke.XXXXXX")"
+trap 'rm -f "$SMOKE_SPEC"' EXIT
+python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > "$SMOKE_SPEC"
+python3 scripts/validate-gaps-v1.py "$SMOKE_SPEC"
+rm -f "$SMOKE_SPEC"
+trap - EXIT
 ```
 
 - [ ] **Step 2: Update `gaps/README.md`**

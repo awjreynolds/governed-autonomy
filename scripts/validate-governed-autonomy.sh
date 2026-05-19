@@ -22,6 +22,14 @@ for spec in gaps/examples/v1/*/ga-process.v1.yml; do
   python3 scripts/validate-gaps-v1.py "$spec"
 done
 
+echo "==> Smoke-testing v0.1 to v1 migrator"
+SMOKE_SPEC="$(mktemp "$ROOT/gaps-migrate-smoke.XXXXXX")"
+trap 'rm -f "$SMOKE_SPEC"' EXIT
+python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > "$SMOKE_SPEC"
+python3 scripts/validate-gaps-v1.py "$SMOKE_SPEC"
+rm -f "$SMOKE_SPEC"
+trap - EXIT
+
 echo "==> Running test suites"
 python3 -m unittest discover tests/gaps -v
 
