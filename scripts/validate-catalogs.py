@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Validate every GAPS v1 catalog against its meta-schema plus cross-catalog rules.
-
-Phase 1a scope: GAPS-native catalogs (actions, evidence-kinds, risk-patterns).
-Phase 1b extends this script to also validate OSCAL control catalogs.
-"""
+"""Validate GAPS-native catalogs and OSCAL control catalogs."""
 
 from __future__ import annotations
 
@@ -159,6 +155,29 @@ def validate(catalogs_root: Path, schemas_root: Path) -> None:
     missing = expected_categories - observed
     if missing:
         raise ValidationError(f"actions.yml: missing actions in categories {sorted(missing)}")
+
+    oscal_schema_path = schemas_root / "oscal-catalog.schema.json"
+    controls_dir = catalogs_root / "controls"
+    if oscal_schema_path.exists() and controls_dir.exists():
+        oscal_schema = load_json(oscal_schema_path)
+        seen_uuids: dict[str, Path] = {}
+        for path in sorted(controls_dir.glob("*.json")):
+            catalog = load_json(path)
+            validate_against_schema(catalog, oscal_schema, str(path))
+            catalog_uuid = catalog["catalog"]["uuid"]
+            if catalog_uuid in seen_uuids:
+                raise ValidationError(
+                    f"OSCAL catalog UUID collision: {seen_uuids[catalog_uuid]} and {path}"
+                )
+            seen_uuids[catalog_uuid] = path
+
+            control_ids_per_catalog: dict[str, str] = {}
+            for group in catalog["catalog"]["groups"]:
+                for control in group["controls"]:
+                    cid = control["id"]
+                    if cid in control_ids_per_catalog:
+                        raise ValidationError(f"{path}: duplicate control id {cid!r}")
+                    control_ids_per_catalog[cid] = group["id"]
 
 
 def main() -> int:
