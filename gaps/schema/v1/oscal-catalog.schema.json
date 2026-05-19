@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/awjreynolds/governed-autonomy/gaps/schema/v1/oscal-catalog.schema.json",
+  "title": "GAPS v1 OSCAL Catalog Subset",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["catalog"],
+  "properties": {
+    "catalog": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["uuid", "metadata", "groups"],
+      "properties": {
+        "uuid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["title", "version", "oscal-version"],
+          "properties": {
+            "title": { "type": "string" },
+            "version": { "type": "string" },
+            "oscal-version": { "type": "string", "const": "1.1.2" },
+            "published": { "type": "string" },
+            "last-modified": { "type": "string" }
+          }
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["id", "title", "controls"],
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" },
+              "controls": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "required": ["id", "title"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "title": { "type": "string" },
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true,
+                        "required": ["name", "prose"],
+                        "properties": {
+                          "name": { "type": "string" },
+                          "prose": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

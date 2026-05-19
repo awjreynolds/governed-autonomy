@@ -1,0 +1,122 @@
+{
+  "catalog": {
+    "uuid": "7b1d1619-4788-5cd1-8a6f-6e8a8d12b9d1",
+    "metadata": {
+      "title": "EU AI Act \u2014 selected articles for deployer/provider obligations",
+      "version": "1.0",
+      "oscal-version": "1.1.2"
+    },
+    "groups": [
+      {
+        "id": "high-risk-obligations",
+        "title": "Chapter III \u2014 High-risk AI systems",
+        "controls": [
+          {
+            "id": "Art.9",
+            "title": "Risk management system."
+          },
+          {
+            "id": "Art.10",
+            "title": "Data and data governance."
+          },
+          {
+            "id": "Art.11",
+            "title": "Technical documentation."
+          },
+          {
+            "id": "Art.12",
+            "title": "Record-keeping."
+          },
+          {
+            "id": "Art.13",
+            "title": "Transparency and provision of information to deployers."
+          },
+          {
+            "id": "Art.14",
+            "title": "Human oversight."
+          },
+          {
+            "id": "Art.15",
+            "title": "Accuracy, robustness, and cybersecurity."
+          },
+          {
+            "id": "Art.16",
+            "title": "Obligations of providers of high-risk AI systems."
+          },
+          {
+            "id": "Art.17",
+            "title": "Quality management system."
+          },
+          {
+            "id": "Art.18",
+            "title": "Documentation keeping."
+          },
+          {
+            "id": "Art.19",
+            "title": "Automatically generated logs."
+          },
+          {
+            "id": "Art.20",
+            "title": "Corrective actions and duty of information."
+          },
+          {
+            "id": "Art.26",
+            "title": "Obligations of deployers of high-risk AI systems."
+          },
+          {
+            "id": "Art.27",
+            "title": "Fundamental rights impact assessment for high-risk AI systems."
+          }
+        ]
+      },
+      {
+        "id": "transparency",
+        "title": "Chapter IV \u2014 Transparency obligations",
+        "controls": [
+          {
+            "id": "Art.50",
+            "title": "Transparency obligations for providers and deployers of certain AI systems."
+          }
+        ]
+      },
+      {
+        "id": "gpai",
+        "title": "Chapter V \u2014 General-purpose AI models",
+        "controls": [
+          {
+            "id": "Art.53",
+            "title": "Obligations for providers of general-purpose AI models."
+          },
+          {
+            "id": "Art.55",
+            "title": "Obligations for providers of general-purpose AI models with systemic risk."
+          }
+        ]
+      },
+      {
+        "id": "governance",
+        "title": "Chapter VII \u2014 Governance",
+        "controls": [
+          {
+            "id": "Art.66",
+            "title": "Tasks of the AI Office."
+          }
+        ]
+      },
+      {
+        "id": "post-market",
+        "title": "Chapter IX \u2014 Post-market monitoring",
+        "controls": [
+          {
+            "id": "Art.72",
+            "title": "Post-market monitoring by providers."
+          },
+          {
+            "id": "Art.73",
+            "title": "Reporting of serious incidents."
+          }
+        ]
+      }
+    ]
+  }
+}

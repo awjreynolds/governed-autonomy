@@ -662,7 +662,7 @@ python3 scripts/build-oscal-catalogs.py
 python3 -c "import json; d=json.load(open('gaps/catalogs/v1/controls/eu-ai-act-articles.json')); print('total controls:', sum(len(g['controls']) for g in d['catalog']['groups']))"
 ```
 
-Expected: `total controls: 21`.
+Expected: `total controls: 20`.
 
 - [ ] **Step 3: Commit Task 4**
 

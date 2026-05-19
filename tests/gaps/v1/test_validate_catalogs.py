@@ -65,5 +65,40 @@ class ValidateCatalogsTests(unittest.TestCase):
                 self.assertIn(kind, evidence_ids, f"pattern {pattern['id']} references unknown evidence kind {kind}")
 
 
+class OscalCatalogValidationTests(unittest.TestCase):
+    def test_oscal_catalogs_are_validated(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT)],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertIn("validated", result.stdout)
+
+    def test_duplicate_control_id_fails(self) -> None:
+        catalog_path = ROOT / "gaps" / "catalogs" / "v1" / "controls" / "nist-ai-rmf.json"
+        original = catalog_path.read_text(encoding="utf-8")
+        broken_payload = json.loads(original)
+        first_group = broken_payload["catalog"]["groups"][0]
+        # Duplicate the first control id within the first group.
+        duplicate = dict(first_group["controls"][0])
+        first_group["controls"].append(duplicate)
+        catalog_path.write_text(json.dumps(broken_payload, indent=2) + "\n", encoding="utf-8")
+        try:
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT)],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("duplicate control id", result.stderr.lower())
+        finally:
+            catalog_path.write_text(original, encoding="utf-8")
+
+
 if __name__ == "__main__":
     unittest.main()
