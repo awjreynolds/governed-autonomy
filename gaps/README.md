@@ -44,6 +44,28 @@ adopts CMMN case-and-stage and DMN decision-table concepts conceptually in
 GAPS-native YAML. See `docs/superpowers/specs/2026-05-18-gaps-v1-0-0-design.md`
 for the full architecture.
 
+### v1 reference specs
+
+The v1 reference set lives under `gaps/examples/v1/`:
+
+- `gadd/` — software-delivery case study, migrated from v0.1 at descriptive conformance.
+- `compliance-review/` — adaptive compliance review, migrated from v0.1 at descriptive conformance.
+- `incident-response/` — incident handling, migrated from v0.1 at descriptive conformance.
+- `procurement-approval/` — procurement approvals, migrated from v0.1 at descriptive conformance.
+- `benefits-eligibility-review/` — public-sector casework reference, authored fresh at machine-validatable conformance.
+- `minimal/` — schema smoke-test fixture at descriptive conformance.
+- `comprehensive/` — validator coverage fixture at machine-validatable conformance.
+
+Migrate a v0.1 spec to v1:
+
+```bash
+python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/<process-id>/ga-process.yml
+```
+
+The migrator always emits `conformanceLevel: descriptive`. Uplift to
+`machine-validatable` and `generative` deliberately, recording the
+review in `freshness.driftPolicy`.
+
 OSCAL JSON files are generated from compact YAML sources under
 `gaps/catalogs/v1/controls/sources/`. Regenerate after editing a source:
 

@@ -982,7 +982,7 @@ evidenceModel:
         - lane:intake_lane
       retentionPolicy: regulatory
     - id: identity-attestation
-      kind: external-reference
+      kind: regulatory-record-reference
       label: Verified identity record
       shape:
         required: [system, recordId, verifiedAt]
@@ -1029,7 +1029,7 @@ evidenceModel:
         - lane:decision_communication_lane
       retentionPolicy: regulatory
     - id: time-limit-event
-      kind: audit-event
+      kind: risk-finding
       label: Service standard time-limit breach event
       shape:
         required: [milestoneId, dueAt, observedAt]
@@ -1064,6 +1064,7 @@ lanes:
           label: Awaiting identity verification
         - id: intake_ready
           label: Ready for evidence gathering
+          isTerminal: true
         - id: intake_rejected
           label: Rejected at intake
           isTerminal: true
@@ -1360,7 +1361,7 @@ riskPatterns:
   - patternRef: evidence-drift
     mitigations:
       - Every transition has a guard tied to a typed case file item.
-      - All approval-attestation and audit-event evidence kinds use regulatory retention.
+      - All approval-attestation and risk-finding evidence kinds use regulatory retention.
     evidenceRefs:
       - time-limit-event
       - assessment-approval
@@ -1480,9 +1481,12 @@ Add a migrator smoke test to the script. Edit `scripts/validate-governed-autonom
 
 ```bash
 echo "==> Smoke-testing v0.1 to v1 migrator"
-python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > /tmp/gaps-migrate-smoke.yml
-python3 scripts/validate-gaps-v1.py /tmp/gaps-migrate-smoke.yml
-rm -f /tmp/gaps-migrate-smoke.yml
+SMOKE_SPEC="$(mktemp "$ROOT/gaps-migrate-smoke.XXXXXX")"
+trap 'rm -f "$SMOKE_SPEC"' EXIT
+python3 scripts/migrate-gaps-v0-to-v1.py gaps/examples/gadd/ga-process.yml --stdout > "$SMOKE_SPEC"
+python3 scripts/validate-gaps-v1.py "$SMOKE_SPEC"
+rm -f "$SMOKE_SPEC"
+trap - EXIT
 ```
 
 - [ ] **Step 2: Update `gaps/README.md`**
