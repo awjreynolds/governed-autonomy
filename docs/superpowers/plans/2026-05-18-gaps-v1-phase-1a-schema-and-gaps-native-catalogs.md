@@ -1,12 +1,12 @@
-# GAPS v1.0.0 Phase 1: Schema and Catalogs
+# GAPS v1.0.0 Phase 1a: Schema and GAPS-Native Catalogs
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the v1 ga-process JSON Schema, six v1 catalogs (actions, evidence kinds, risk patterns, NIST AI RMF controls, ISO/IEC 42001 Annex A controls, EU AI Act articles), a catalog validator, and a minimal v1 fixture that validates end-to-end against the v1 schema.
+**Goal:** Land the v1 ga-process JSON Schema, three GAPS-native catalogs (actions, evidence kinds, risk patterns), a catalog validator covering those three, a structural v1 validator, and a minimal v1 fixture that validates end-to-end at descriptive conformance. OSCAL control catalogs ship in Phase 1b.
 
-**Architecture:** v1 lives alongside v0.1. Catalogs under `gaps/catalogs/v1/`; schemas under `gaps/schema/v1/`; reference specs under `gaps/examples/v1/`. Three GAPS-native catalogs are YAML; three OSCAL control catalogs are JSON generated from a compact control-list source via a one-shot Python builder so the source-of-truth is human-readable. The v1 ga-process schema validates structural shape only; semantic cross-reference checks (every roleRef resolves, every actionRef is in the action catalog, state-machine soundness, gate decision completeness) are Phase 2. A new `scripts/validate-gaps-v1.py` dispatches schema validation; `scripts/validate-catalogs.py` validates each catalog against its meta-schema. v0.1 tooling is untouched.
+**Architecture:** v1 lives alongside v0.1. The three GAPS-native catalogs are YAML under `gaps/catalogs/v1/`. Catalog meta-schemas and the v1 ga-process schema are JSON under `gaps/schema/v1/`. `scripts/validate-catalogs.py` validates each catalog against its meta-schema and runs cross-catalog semantic checks. `scripts/validate-gaps-v1.py` validates a v1 spec structurally; semantic cross-reference checks land in Phase 2. v0.1 tooling is untouched. The OSCAL catalog meta-schema and OSCAL JSON files are intentionally absent — Phase 1b adds them and extends the catalog validator.
 
-**Tech Stack:** Python 3 stdlib only (no PyYAML, no jsonschema package — use the existing Ruby YAML→JSON bridge from `scripts/validate-gaps.py` and a hand-rolled JSON Schema 2020-12 subset evaluator already proven in v0.1 validators). OSCAL Catalog Model JSON shape (NIST publication 800-53A-derived structure).
+**Tech Stack:** Python 3 stdlib only (no PyYAML, no jsonschema package — use the existing Ruby YAML→JSON bridge from `scripts/validate-gaps.py` and a hand-rolled JSON Schema 2020-12 subset evaluator already proven in v0.1 validators).
 
 ---
 
@@ -14,8 +14,6 @@
 
 **New directories:**
 - `gaps/catalogs/v1/`
-- `gaps/catalogs/v1/controls/`
-- `gaps/catalogs/v1/controls/sources/` — compact human-readable control lists
 - `gaps/schema/v1/`
 - `gaps/examples/v1/minimal/`
 - `tests/gaps/v1/`
@@ -25,18 +23,10 @@
 - `gaps/schema/v1/action-catalog.schema.json`
 - `gaps/schema/v1/evidence-kinds-catalog.schema.json`
 - `gaps/schema/v1/risk-patterns-catalog.schema.json`
-- `gaps/schema/v1/oscal-catalog.schema.json`
 - `gaps/catalogs/v1/actions.yml`
 - `gaps/catalogs/v1/evidence-kinds.yml`
 - `gaps/catalogs/v1/risk-patterns.yml`
-- `gaps/catalogs/v1/controls/sources/nist-ai-rmf.yml`
-- `gaps/catalogs/v1/controls/sources/iso-42001-annex-a.yml`
-- `gaps/catalogs/v1/controls/sources/eu-ai-act-articles.yml`
-- `gaps/catalogs/v1/controls/nist-ai-rmf.json`
-- `gaps/catalogs/v1/controls/iso-42001-annex-a.json`
-- `gaps/catalogs/v1/controls/eu-ai-act-articles.json`
 - `gaps/examples/v1/minimal/ga-process.v1.yml`
-- `scripts/build-oscal-catalogs.py`
 - `scripts/validate-catalogs.py`
 - `scripts/validate-gaps-v1.py`
 - `tests/gaps/v1/__init__.py`
@@ -50,24 +40,23 @@
 
 ---
 
-### Task 1: Bootstrap directories and catalog meta-schemas
+### Task 1: Bootstrap directories and GAPS-native catalog meta-schemas
 
 **Files:**
-- Create: `gaps/catalogs/v1/controls/sources/.gitkeep`
+- Create: `gaps/catalogs/v1/.gitkeep`
 - Create: `gaps/examples/v1/minimal/.gitkeep`
 - Create: `tests/gaps/v1/__init__.py`
 - Create: `gaps/schema/v1/action-catalog.schema.json`
 - Create: `gaps/schema/v1/evidence-kinds-catalog.schema.json`
 - Create: `gaps/schema/v1/risk-patterns-catalog.schema.json`
-- Create: `gaps/schema/v1/oscal-catalog.schema.json`
 
 - [ ] **Step 1: Create the directory tree**
 
 Run:
 
 ```bash
-mkdir -p gaps/catalogs/v1/controls/sources gaps/schema/v1 gaps/examples/v1/minimal tests/gaps/v1
-touch gaps/catalogs/v1/controls/sources/.gitkeep gaps/examples/v1/minimal/.gitkeep tests/gaps/v1/__init__.py
+mkdir -p gaps/catalogs/v1 gaps/schema/v1 gaps/examples/v1/minimal tests/gaps/v1
+touch gaps/catalogs/v1/.gitkeep gaps/examples/v1/minimal/.gitkeep tests/gaps/v1/__init__.py
 ```
 
 Expected: exit status 0; all directories exist.
@@ -225,88 +214,14 @@ Expected: exit status 0; all directories exist.
 }
 ```
 
-- [ ] **Step 5: Create `gaps/schema/v1/oscal-catalog.schema.json`**
-
-This is the permissive OSCAL Catalog Model subset GAPS adopts. NIST's official OSCAL catalog schema is large; we adopt a strict subset sufficient for control reference + structured statement text.
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/awjreynolds/governed-autonomy/gaps/schema/v1/oscal-catalog.schema.json",
-  "title": "GAPS v1 OSCAL Catalog Subset",
-  "type": "object",
-  "additionalProperties": true,
-  "required": ["catalog"],
-  "properties": {
-    "catalog": {
-      "type": "object",
-      "additionalProperties": true,
-      "required": ["uuid", "metadata", "groups"],
-      "properties": {
-        "uuid": { "type": "string", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" },
-        "metadata": {
-          "type": "object",
-          "additionalProperties": true,
-          "required": ["title", "version", "oscal-version"],
-          "properties": {
-            "title": { "type": "string" },
-            "version": { "type": "string" },
-            "oscal-version": { "type": "string", "const": "1.1.2" },
-            "published": { "type": "string" },
-            "last-modified": { "type": "string" }
-          }
-        },
-        "groups": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "additionalProperties": true,
-            "required": ["id", "title", "controls"],
-            "properties": {
-              "id": { "type": "string" },
-              "title": { "type": "string" },
-              "controls": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "required": ["id", "title"],
-                  "properties": {
-                    "id": { "type": "string" },
-                    "title": { "type": "string" },
-                    "parts": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "additionalProperties": true,
-                        "required": ["name", "prose"],
-                        "properties": {
-                          "name": { "type": "string" },
-                          "prose": { "type": "string" }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-- [ ] **Step 6: Commit Task 1**
+- [ ] **Step 5: Commit Task 1**
 
 ```bash
 git add gaps/catalogs/v1 gaps/schema/v1 gaps/examples/v1 tests/gaps/v1
-git commit -m "Bootstrap GAPS v1 directories and catalog meta-schemas"
+git commit -m "Bootstrap GAPS v1 directories and GAPS-native catalog meta-schemas"
 ```
 
-Expected: commit succeeds. Verify with `git log -1 --stat`.
+Expected: commit succeeds.
 
 ---
 
@@ -894,7 +809,7 @@ git commit -m "Add GAPS v1 action catalog"
 
 - [ ] **Step 1: Write the full evidence-kinds catalog**
 
-Create `gaps/catalogs/v1/evidence-kinds.yml` with this content:
+Create `gaps/catalogs/v1/evidence-kinds.yml`:
 
 ```yaml
 catalogId: evidence-kinds
@@ -1311,543 +1226,15 @@ git commit -m "Add GAPS v1 risk-patterns catalog"
 
 ---
 
-### Task 5: OSCAL control catalogs (sources + builder)
-
-OSCAL catalogs are large and have boilerplate UUIDs. The plan ships them as compact YAML source files plus a `build-oscal-catalogs.py` script that expands sources into valid OSCAL JSON. Sources are the canonical edit surface; JSON outputs are regenerated and committed.
-
-**Files:**
-- Create: `gaps/catalogs/v1/controls/sources/nist-ai-rmf.yml`
-- Create: `gaps/catalogs/v1/controls/sources/iso-42001-annex-a.yml`
-- Create: `gaps/catalogs/v1/controls/sources/eu-ai-act-articles.yml`
-- Create: `scripts/build-oscal-catalogs.py`
-- Generate: `gaps/catalogs/v1/controls/nist-ai-rmf.json`
-- Generate: `gaps/catalogs/v1/controls/iso-42001-annex-a.json`
-- Generate: `gaps/catalogs/v1/controls/eu-ai-act-articles.json`
-
-- [ ] **Step 1: Write `gaps/catalogs/v1/controls/sources/nist-ai-rmf.yml`**
-
-Each entry maps to one OSCAL control. NIST AI RMF 1.0 organizes guidance into four functions (Govern, Map, Measure, Manage) with categories and subcategories. Subcategory IDs follow NIST's pattern (`GOVERN-1.1`, etc.). UUIDs are deterministic UUIDv5 generated from the namespace `gaps.governed-autonomy.dev` plus the control id — keeps regeneration stable.
-
-```yaml
-catalogTitle: NIST AI Risk Management Framework 1.0
-catalogVersion: "1.0"
-catalogUuidSeed: nist-ai-rmf
-namespace: gaps.governed-autonomy.dev
-groups:
-  - id: govern
-    title: GOVERN
-    controls:
-      - id: GOVERN-1.1
-        title: Legal and regulatory requirements involving AI are understood, managed, and documented.
-      - id: GOVERN-1.2
-        title: The characteristics of trustworthy AI are integrated into organizational policies, processes, and procedures.
-      - id: GOVERN-1.3
-        title: Processes, procedures, and practices are in place to determine the needed level of risk management activities based on the organization's risk tolerance.
-      - id: GOVERN-1.4
-        title: The risk management process and its outcomes are established through transparent policies, procedures, and other controls.
-      - id: GOVERN-1.5
-        title: Ongoing monitoring and periodic review of the risk management process and its outcomes are planned.
-      - id: GOVERN-1.6
-        title: Mechanisms are in place to inventory AI systems and are resourced according to organizational risk priorities.
-      - id: GOVERN-1.7
-        title: Processes and procedures are in place for decommissioning and phasing out AI systems safely.
-      - id: GOVERN-2.1
-        title: Roles, responsibilities, and lines of communication related to mapping, measuring, and managing AI risks are documented.
-      - id: GOVERN-2.2
-        title: The organization's personnel and partners receive AI risk management training.
-      - id: GOVERN-2.3
-        title: Executive leadership is responsible for decisions about risks associated with AI system development and deployment.
-      - id: GOVERN-3.1
-        title: Decision-making related to mapping, measuring, and managing AI risks throughout the lifecycle is informed by a diverse team.
-      - id: GOVERN-3.2
-        title: Policies and procedures are in place to define and differentiate roles and responsibilities for human-AI configurations.
-      - id: GOVERN-4.1
-        title: Organizational policies and practices are in place to foster a critical thinking and safety-first mindset.
-      - id: GOVERN-4.2
-        title: Organizational teams document the risks and potential impacts of the AI technology they design, develop, deploy, evaluate, or acquire.
-      - id: GOVERN-4.3
-        title: Organizational practices are in place to enable AI testing, identification of incidents, and information sharing.
-      - id: GOVERN-5.1
-        title: Organizational policies and practices are in place to collect, consider, prioritize, and integrate feedback.
-      - id: GOVERN-5.2
-        title: Mechanisms are established to enable AI actors to regularly incorporate adjudicated feedback from relevant stakeholders into system design and implementation.
-      - id: GOVERN-6.1
-        title: Policies and procedures are in place to address AI risks and benefits arising from third-party software and data.
-      - id: GOVERN-6.2
-        title: Contingency processes are in place to handle failures or incidents in third-party data or AI systems deemed to be high-risk.
-  - id: map
-    title: MAP
-    controls:
-      - id: MAP-1.1
-        title: Intended purposes, potentially beneficial uses, context-specific laws, norms and expectations, and prospective settings in which the AI system will be deployed are understood and documented.
-      - id: MAP-1.2
-        title: Interdisciplinary AI actors, competencies, skills, and capacities for establishing context reflect demographic diversity and broad domain and user experience expertise.
-      - id: MAP-1.3
-        title: The organization's mission and relevant goals for AI technology are understood and documented.
-      - id: MAP-1.4
-        title: The business value or context of business use has been clearly defined.
-      - id: MAP-1.5
-        title: Organizational risk tolerances are determined and documented.
-      - id: MAP-1.6
-        title: System requirements are elicited from and understood by relevant AI actors.
-      - id: MAP-2.1
-        title: The specific tasks and methods used to implement the tasks that the AI system will support are defined.
-      - id: MAP-2.2
-        title: Information about the AI system's knowledge limits and how system output may be utilized and overseen by humans is documented.
-      - id: MAP-2.3
-        title: Scientific integrity and TEVV considerations are identified and documented.
-      - id: MAP-3.1
-        title: Potential benefits of intended AI system functionality and performance are examined and documented.
-      - id: MAP-3.2
-        title: Potential costs of the AI system, including non-monetary costs, are characterized.
-      - id: MAP-3.3
-        title: Targeted application scope is specified and documented.
-      - id: MAP-3.4
-        title: Processes for operator and practitioner proficiency with AI system performance and trustworthiness are defined, assessed, and documented.
-      - id: MAP-3.5
-        title: Processes for human oversight are defined, assessed, and documented.
-      - id: MAP-4.1
-        title: Approaches for mapping AI technology and legal risks are followed.
-      - id: MAP-4.2
-        title: Internal risk controls for components of the AI system, including third-party AI technologies, are identified and documented.
-      - id: MAP-5.1
-        title: Likelihood and magnitude of each identified impact are identified and documented.
-      - id: MAP-5.2
-        title: Practices and personnel for supporting regular engagement with relevant AI actors and integrating feedback about positive, negative, and unanticipated impacts are in place.
-  - id: measure
-    title: MEASURE
-    controls:
-      - id: MEASURE-1.1
-        title: Approaches and metrics for measurement of AI risks enumerated during the MAP function are selected for implementation starting with the most significant AI risks.
-      - id: MEASURE-1.2
-        title: Appropriateness of AI metrics and effectiveness of existing controls is regularly assessed and updated.
-      - id: MEASURE-1.3
-        title: Internal experts who did not serve as front-line developers for the system and/or independent assessors are involved in regular assessments and updates.
-      - id: MEASURE-2.1
-        title: Test sets, metrics, and details about the tools used during TEVV are documented.
-      - id: MEASURE-2.2
-        title: Evaluations involving human subjects meet applicable requirements and are representative of the relevant population.
-      - id: MEASURE-2.3
-        title: AI system performance or assurance criteria are measured qualitatively or quantitatively and demonstrated for conditions similar to deployment setting(s).
-      - id: MEASURE-2.4
-        title: The functionality and behavior of the AI system and its components is monitored when in production.
-      - id: MEASURE-2.5
-        title: The AI system to be deployed is demonstrated to be valid and reliable.
-      - id: MEASURE-2.6
-        title: The AI system is evaluated regularly for safety risks.
-      - id: MEASURE-2.7
-        title: AI system security and resilience are evaluated and documented.
-      - id: MEASURE-2.8
-        title: Risks associated with transparency and accountability are examined and documented.
-      - id: MEASURE-2.9
-        title: The AI model is explained, validated, and documented.
-      - id: MEASURE-2.10
-        title: Privacy risk of the AI system is examined and documented.
-      - id: MEASURE-2.11
-        title: Fairness and bias of the AI system are evaluated and results are documented.
-      - id: MEASURE-2.12
-        title: Environmental impact and sustainability of AI model training and management activities are assessed.
-      - id: MEASURE-2.13
-        title: Effectiveness of the employed TEVV metrics and processes is evaluated and documented.
-      - id: MEASURE-3.1
-        title: Approaches, personnel, and documentation are in place to regularly identify and track existing, unanticipated, and emergent AI risks.
-      - id: MEASURE-3.2
-        title: Risk tracking approaches are considered for settings where AI risks are difficult to assess.
-      - id: MEASURE-3.3
-        title: Feedback processes for end users and impacted communities are integrated into system evaluation metrics.
-      - id: MEASURE-4.1
-        title: Measurement approaches for identifying AI risks are connected to deployment context and informed through consultation with domain experts.
-      - id: MEASURE-4.2
-        title: Measurement results regarding AI system trustworthiness are informed by input from domain experts and relevant AI actors to validate whether the system is performing consistently.
-      - id: MEASURE-4.3
-        title: Measurable performance improvements based on consultations with relevant AI actors are identified and documented.
-  - id: manage
-    title: MANAGE
-    controls:
-      - id: MANAGE-1.1
-        title: A determination is made as to whether the AI system achieves its intended purposes and stated objectives.
-      - id: MANAGE-1.2
-        title: Treatment of documented AI risks is prioritized based on impact, likelihood, and available resources or methods.
-      - id: MANAGE-1.3
-        title: Responses to the AI risks deemed high priority are developed, planned, and documented.
-      - id: MANAGE-1.4
-        title: Negative residual risks to both downstream acquirers of AI systems and end users are documented.
-      - id: MANAGE-2.1
-        title: Resources required to manage AI risks are taken into account.
-      - id: MANAGE-2.2
-        title: Mechanisms are in place and applied to sustain the value of deployed AI systems.
-      - id: MANAGE-2.3
-        title: Procedures are followed to respond to and recover from a previously unknown risk when it is identified.
-      - id: MANAGE-2.4
-        title: Mechanisms are in place and applied, and responsibilities are assigned to supersede, disengage, or deactivate AI systems that demonstrate performance or outcomes inconsistent with intended use.
-      - id: MANAGE-3.1
-        title: AI risks and benefits from third-party resources are regularly monitored and risk controls are applied and documented.
-      - id: MANAGE-3.2
-        title: Pre-trained models which are used for development are monitored as part of AI system regular monitoring and maintenance.
-      - id: MANAGE-4.1
-        title: Post-deployment AI system monitoring plans are implemented.
-      - id: MANAGE-4.2
-        title: Measurable continuous improvement activities are integrated into AI system updates and include regular engagement with interested parties.
-      - id: MANAGE-4.3
-        title: Incidents and errors are communicated to relevant AI actors, including affected communities.
-```
-
-- [ ] **Step 2: Write `gaps/catalogs/v1/controls/sources/iso-42001-annex-a.yml`**
-
-```yaml
-catalogTitle: ISO/IEC 42001 Annex A Controls
-catalogVersion: "1.0"
-catalogUuidSeed: iso-42001-annex-a
-namespace: gaps.governed-autonomy.dev
-groups:
-  - id: A2-policies
-    title: A.2 Policies related to AI
-    controls:
-      - id: A.2.2
-        title: AI policy.
-      - id: A.2.3
-        title: Alignment with other organizational policies.
-      - id: A.2.4
-        title: Review of the AI policy.
-  - id: A3-internal-organization
-    title: A.3 Internal organization
-    controls:
-      - id: A.3.2
-        title: AI roles and responsibilities.
-      - id: A.3.3
-        title: Reporting of concerns.
-  - id: A4-resources
-    title: A.4 Resources for AI systems
-    controls:
-      - id: A.4.2
-        title: Resource documentation.
-      - id: A.4.3
-        title: Data resources.
-      - id: A.4.4
-        title: Tooling resources.
-      - id: A.4.5
-        title: System and computing resources.
-      - id: A.4.6
-        title: Human resources.
-  - id: A5-impact-assessment
-    title: A.5 Assessing impacts of AI systems
-    controls:
-      - id: A.5.2
-        title: AI system impact assessment process.
-      - id: A.5.3
-        title: Documentation of AI system impact assessments.
-      - id: A.5.4
-        title: Assessing AI system impact on individuals or groups of individuals.
-      - id: A.5.5
-        title: Assessing societal impacts of AI systems.
-  - id: A6-system-lifecycle
-    title: A.6 AI system life cycle
-    controls:
-      - id: A.6.1.2
-        title: Objectives for responsible development of AI systems.
-      - id: A.6.1.3
-        title: Processes for responsible AI system design and development.
-      - id: A.6.2.2
-        title: AI system requirements and specification.
-      - id: A.6.2.3
-        title: Documentation of AI system design and development.
-      - id: A.6.2.4
-        title: AI system verification and validation.
-      - id: A.6.2.5
-        title: AI system deployment.
-      - id: A.6.2.6
-        title: AI system operation and monitoring.
-      - id: A.6.2.7
-        title: AI system technical documentation.
-      - id: A.6.2.8
-        title: AI system event logs.
-  - id: A7-data
-    title: A.7 Data for AI systems
-    controls:
-      - id: A.7.2
-        title: Data for development and enhancement of AI system.
-      - id: A.7.3
-        title: Acquisition of data.
-      - id: A.7.4
-        title: Quality of data for AI systems.
-      - id: A.7.5
-        title: Data provenance.
-      - id: A.7.6
-        title: Data preparation.
-  - id: A8-information
-    title: A.8 Information for interested parties of AI systems
-    controls:
-      - id: A.8.2
-        title: System documentation and information for users.
-      - id: A.8.3
-        title: External reporting.
-      - id: A.8.4
-        title: Communication of incidents.
-      - id: A.8.5
-        title: Information for interested parties.
-  - id: A9-ai-use
-    title: A.9 Use of AI systems
-    controls:
-      - id: A.9.2
-        title: Processes for responsible use of AI systems.
-      - id: A.9.3
-        title: Objectives for responsible use of AI systems.
-      - id: A.9.4
-        title: Intended use of AI systems.
-  - id: A10-third-parties
-    title: A.10 Third-party and customer relationships
-    controls:
-      - id: A.10.2
-        title: Allocation of responsibilities.
-      - id: A.10.3
-        title: Suppliers.
-      - id: A.10.4
-        title: Customers.
-```
-
-- [ ] **Step 3: Write `gaps/catalogs/v1/controls/sources/eu-ai-act-articles.yml`**
-
-```yaml
-catalogTitle: EU AI Act — selected articles for deployer/provider obligations
-catalogVersion: "1.0"
-catalogUuidSeed: eu-ai-act-articles
-namespace: gaps.governed-autonomy.dev
-groups:
-  - id: high-risk-obligations
-    title: Chapter III — High-risk AI systems
-    controls:
-      - id: Art.9
-        title: Risk management system.
-      - id: Art.10
-        title: Data and data governance.
-      - id: Art.11
-        title: Technical documentation.
-      - id: Art.12
-        title: Record-keeping.
-      - id: Art.13
-        title: Transparency and provision of information to deployers.
-      - id: Art.14
-        title: Human oversight.
-      - id: Art.15
-        title: Accuracy, robustness, and cybersecurity.
-      - id: Art.16
-        title: Obligations of providers of high-risk AI systems.
-      - id: Art.17
-        title: Quality management system.
-      - id: Art.18
-        title: Documentation keeping.
-      - id: Art.19
-        title: Automatically generated logs.
-      - id: Art.20
-        title: Corrective actions and duty of information.
-      - id: Art.26
-        title: Obligations of deployers of high-risk AI systems.
-      - id: Art.27
-        title: Fundamental rights impact assessment for high-risk AI systems.
-  - id: transparency
-    title: Chapter IV — Transparency obligations
-    controls:
-      - id: Art.50
-        title: Transparency obligations for providers and deployers of certain AI systems.
-  - id: gpai
-    title: Chapter V — General-purpose AI models
-    controls:
-      - id: Art.53
-        title: Obligations for providers of general-purpose AI models.
-      - id: Art.55
-        title: Obligations for providers of general-purpose AI models with systemic risk.
-  - id: governance
-    title: Chapter VII — Governance
-    controls:
-      - id: Art.66
-        title: Tasks of the AI Office.
-  - id: post-market
-    title: Chapter IX — Post-market monitoring
-    controls:
-      - id: Art.72
-        title: Post-market monitoring by providers.
-      - id: Art.73
-        title: Reporting of serious incidents.
-```
-
-- [ ] **Step 4: Write the OSCAL builder script**
-
-Create `scripts/build-oscal-catalogs.py`:
-
-```python
-#!/usr/bin/env python3
-"""Expand compact control-source YAML files into OSCAL Catalog Model JSON.
-
-Source files live at `gaps/catalogs/v1/controls/sources/*.yml`.
-Outputs live at `gaps/catalogs/v1/controls/*.json`.
-
-Idempotent: re-running produces byte-identical output for unchanged sources
-because all UUIDs are derived deterministically via UUIDv5 from a stable
-namespace plus control id.
-"""
-
-from __future__ import annotations
-
-import argparse
-import datetime as _dt
-import json
-import subprocess
-import sys
-import uuid
-from pathlib import Path
-from typing import Any
-
-ROOT = Path(__file__).resolve().parents[1]
-SOURCES_DIR = ROOT / "gaps" / "catalogs" / "v1" / "controls" / "sources"
-OUTPUT_DIR = ROOT / "gaps" / "catalogs" / "v1" / "controls"
-NAMESPACE_UUID = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
-OSCAL_VERSION = "1.1.2"
-
-sys.dont_write_bytecode = True
-
-
-def load_yaml(path: Path) -> Any:
-    result = subprocess.run(
-        [
-            "ruby",
-            "-ryaml",
-            "-rjson",
-            "-e",
-            "print YAML.load_file(ARGV[0]).to_json",
-            str(path),
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise SystemExit(f"failed to load {path}: {result.stderr.strip()}")
-    return json.loads(result.stdout)
-
-
-def stable_uuid(seed: str, key: str) -> str:
-    return str(uuid.uuid5(NAMESPACE_UUID, f"{seed}:{key}"))
-
-
-def build_catalog(source: dict[str, Any]) -> dict[str, Any]:
-    seed = source["catalogUuidSeed"]
-    catalog_uuid = stable_uuid(seed, "catalog")
-    groups: list[dict[str, Any]] = []
-    for group in source["groups"]:
-        controls = []
-        for control in group["controls"]:
-            controls.append({
-                "id": control["id"],
-                "title": control["title"],
-            })
-        groups.append({
-            "id": group["id"],
-            "title": group["title"],
-            "controls": controls,
-        })
-    return {
-        "catalog": {
-            "uuid": catalog_uuid,
-            "metadata": {
-                "title": source["catalogTitle"],
-                "version": source["catalogVersion"],
-                "oscal-version": OSCAL_VERSION,
-                "last-modified": _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            },
-            "groups": groups,
-        },
-    }
-
-
-def write_json(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n", encoding="utf-8")
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Exit non-zero if regenerated JSON differs from committed JSON.",
-    )
-    args = parser.parse_args()
-    sources = sorted(SOURCES_DIR.glob("*.yml"))
-    if not sources:
-        print("no sources found", file=sys.stderr)
-        return 1
-    differ = False
-    for source_path in sources:
-        source = load_yaml(source_path)
-        catalog = build_catalog(source)
-        output_path = OUTPUT_DIR / (source_path.stem + ".json")
-        rendered = json.dumps(catalog, indent=2, sort_keys=False) + "\n"
-        if args.check and output_path.exists() and output_path.read_text(encoding="utf-8") != rendered:
-            print(f"DIFFER: {output_path}", file=sys.stderr)
-            differ = True
-            continue
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(rendered, encoding="utf-8")
-        if not args.check:
-            print(f"wrote {output_path}")
-    return 1 if differ else 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
-```
-
-- [ ] **Step 5: Run the builder to generate the OSCAL JSON files**
-
-Run:
-
-```bash
-chmod +x scripts/build-oscal-catalogs.py
-python3 scripts/build-oscal-catalogs.py
-```
-
-Expected output:
-
-```
-wrote /Users/.../gaps/catalogs/v1/controls/nist-ai-rmf.json
-wrote /Users/.../gaps/catalogs/v1/controls/iso-42001-annex-a.json
-wrote /Users/.../gaps/catalogs/v1/controls/eu-ai-act-articles.json
-```
-
-- [ ] **Step 6: Sanity-check one output**
-
-Run:
-
-```bash
-python3 -c "import json; d=json.load(open('gaps/catalogs/v1/controls/nist-ai-rmf.json')); print(d['catalog']['metadata']['title']); print('groups:', [g['id'] for g in d['catalog']['groups']]); print('total controls:', sum(len(g['controls']) for g in d['catalog']['groups']))"
-```
-
-Expected:
-
-```
-NIST AI Risk Management Framework 1.0
-groups: ['govern', 'map', 'measure', 'manage']
-total controls: 72
-```
-
-- [ ] **Step 7: Commit Task 5**
-
-```bash
-git add gaps/catalogs/v1/controls scripts/build-oscal-catalogs.py
-git commit -m "Add GAPS v1 OSCAL control catalogs (NIST AI RMF, ISO 42001, EU AI Act)"
-```
-
----
-
-### Task 6: Catalog validator
+### Task 5: Catalog validator (GAPS-native scope)
 
 **Files:**
 - Create: `scripts/validate-catalogs.py`
 - Create: `tests/gaps/v1/test_validate_catalogs.py`
 
-The catalog validator validates each catalog file against its meta-schema and runs cross-catalog semantic checks (every category enum value is used at least once for the action catalog; every risk-pattern `exampleEvidenceKinds` resolves to an evidence-kinds catalog id; every OSCAL catalog has a unique UUID).
+The catalog validator validates each GAPS-native catalog file against its meta-schema and runs cross-catalog semantic checks (every category enum value is used at least once in the action catalog; every risk-pattern `exampleEvidenceKinds` resolves to an evidence-kinds catalog id; every catalog has unique ids). OSCAL catalog validation is added in Phase 1b.
 
-- [ ] **Step 1: Write the failing test fixtures**
+- [ ] **Step 1: Write the failing test**
 
 Create `tests/gaps/v1/test_validate_catalogs.py`:
 
@@ -1935,7 +1322,11 @@ Expected: `test_default_run_passes` FAILS because the validator does not exist y
 
 ```python
 #!/usr/bin/env python3
-"""Validate every GAPS v1 catalog against its meta-schema plus cross-catalog rules."""
+"""Validate every GAPS v1 catalog against its meta-schema plus cross-catalog rules.
+
+Phase 1a scope: GAPS-native catalogs (actions, evidence-kinds, risk-patterns).
+Phase 1b extends this script to also validate OSCAL control catalogs.
+"""
 
 from __future__ import annotations
 
@@ -1987,19 +1378,18 @@ def validate_against_schema(data: Any, schema: dict[str, Any], where: str) -> No
     """Tiny JSON Schema subset evaluator covering the patterns this repo uses.
 
     Supports: type, required, properties, additionalProperties (False or schema),
-    items, minItems, minLength, enum, const, pattern, anyOf, oneOf.
-    Mirrors the subset proven in v0.1 validators.
+    items, minItems, minLength, enum, const, pattern.
     """
     errors: list[str] = []
 
     def check(node_data: Any, node_schema: dict[str, Any], path: str) -> None:
-        node_type = node_schema.get("type")
         if "const" in node_schema and node_data != node_schema["const"]:
             errors.append(f"{path}: expected const {node_schema['const']!r}, got {node_data!r}")
             return
         if "enum" in node_schema and node_data not in node_schema["enum"]:
             errors.append(f"{path}: value {node_data!r} not in enum")
             return
+        node_type = node_schema.get("type")
         if node_type == "object":
             if not isinstance(node_data, dict):
                 errors.append(f"{path}: expected object, got {type(node_data).__name__}")
@@ -2037,12 +1427,6 @@ def validate_against_schema(data: Any, schema: dict[str, Any], where: str) -> No
         elif node_type == "boolean":
             if not isinstance(node_data, bool):
                 errors.append(f"{path}: expected boolean")
-        elif node_type == "number":
-            if not isinstance(node_data, (int, float)) or isinstance(node_data, bool):
-                errors.append(f"{path}: expected number")
-        elif node_type == "integer":
-            if not isinstance(node_data, int) or isinstance(node_data, bool):
-                errors.append(f"{path}: expected integer")
 
     check(data, schema, where)
     if errors:
@@ -2064,7 +1448,6 @@ def validate(catalogs_root: Path, schemas_root: Path) -> None:
     action_schema = load_json(schemas_root / "action-catalog.schema.json")
     evidence_schema = load_json(schemas_root / "evidence-kinds-catalog.schema.json")
     risk_schema = load_json(schemas_root / "risk-patterns-catalog.schema.json")
-    oscal_schema = load_json(schemas_root / "oscal-catalog.schema.json")
 
     actions = load_yaml(catalogs_root / "actions.yml")
     evidence_kinds = load_yaml(catalogs_root / "evidence-kinds.yml")
@@ -2099,26 +1482,6 @@ def validate(catalogs_root: Path, schemas_root: Path) -> None:
     missing = expected_categories - observed
     if missing:
         raise ValidationError(f"actions.yml: missing actions in categories {sorted(missing)}")
-
-    controls_dir = catalogs_root / "controls"
-    seen_uuids: dict[str, Path] = {}
-    for path in sorted(controls_dir.glob("*.json")):
-        catalog = load_json(path)
-        validate_against_schema(catalog, oscal_schema, str(path))
-        catalog_uuid = catalog["catalog"]["uuid"]
-        if catalog_uuid in seen_uuids:
-            raise ValidationError(
-                f"OSCAL catalog UUID collision: {seen_uuids[catalog_uuid]} and {path}"
-            )
-        seen_uuids[catalog_uuid] = path
-
-        control_ids: dict[str, str] = {}
-        for group in catalog["catalog"]["groups"]:
-            for control in group["controls"]:
-                cid = control["id"]
-                if cid in control_ids:
-                    raise ValidationError(f"{path}: duplicate control id {cid!r}")
-                control_ids[cid] = group["id"]
 
 
 def main() -> int:
@@ -2159,7 +1522,7 @@ chmod +x scripts/validate-catalogs.py
 python3 -m unittest tests.gaps.v1.test_validate_catalogs -v
 ```
 
-Expected: all tests PASS, including `test_default_run_passes`, `test_missing_catalog_fails`, `test_evidence_kind_reference_resolves`.
+Expected: all three tests PASS.
 
 - [ ] **Step 5: Run the validator directly**
 
@@ -2169,23 +1532,23 @@ python3 scripts/validate-catalogs.py
 
 Expected: `GAPS v1 catalogs validated`.
 
-- [ ] **Step 6: Commit Task 6**
+- [ ] **Step 6: Commit Task 5**
 
 ```bash
 git add scripts/validate-catalogs.py tests/gaps/v1/test_validate_catalogs.py
-git commit -m "Add GAPS v1 catalog validator"
+git commit -m "Add GAPS v1 catalog validator (GAPS-native scope)"
 ```
 
 ---
 
-### Task 7: v1 ga-process JSON Schema
+### Task 6: v1 ga-process JSON Schema
 
 **Files:**
 - Create: `gaps/schema/v1/ga-process.schema.json`
 
 - [ ] **Step 1: Write the v1 ga-process schema**
 
-Create `gaps/schema/v1/ga-process.schema.json`. This schema enforces structural shape and conditional shapes by conformance level. Cross-reference resolution against catalogs is handled by `validate-gaps-v1.py` in Task 8, not by the schema alone.
+Create `gaps/schema/v1/ga-process.schema.json`. This schema enforces structural shape. Cross-reference resolution against catalogs is handled by `validate-gaps-v1.py` in Task 7 and Phase 2, not by the schema alone.
 
 ```json
 {
@@ -2558,7 +1921,7 @@ Create `gaps/schema/v1/ga-process.schema.json`. This schema enforces structural 
 }
 ```
 
-- [ ] **Step 2: Commit Task 7**
+- [ ] **Step 2: Commit Task 6**
 
 ```bash
 git add gaps/schema/v1/ga-process.schema.json
@@ -2567,7 +1930,7 @@ git commit -m "Add GAPS v1 ga-process JSON Schema"
 
 ---
 
-### Task 8: v1 schema validator and minimal fixture
+### Task 7: v1 schema validator and minimal fixture
 
 **Files:**
 - Create: `scripts/validate-gaps-v1.py`
@@ -2575,6 +1938,8 @@ git commit -m "Add GAPS v1 ga-process JSON Schema"
 - Create: `tests/gaps/v1/test_validate_gaps_v1.py`
 
 `validate-gaps-v1.py` performs structural schema validation only. Cross-reference integrity, state-machine soundness, gate decision completeness, and conformance-level gating are Phase 2.
+
+The minimal fixture references the OSCAL NIST AI RMF catalog path even though that file lands in Phase 1b. The validator does not resolve the path (only Phase 2 does); the path string just needs to satisfy the schema's string-type requirement. This is intentional: Phase 1a establishes the contract that specs declare their OSCAL catalogs, even before those catalogs exist on disk.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2611,7 +1976,7 @@ class ValidateGapsV1Tests(unittest.TestCase):
         result = run(str(MINIMAL_FIXTURE))
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
-    def test_missing_required_field_fails(self, tmp_path=None) -> None:
+    def test_missing_required_field_fails(self) -> None:
         import tempfile
         import textwrap
 
@@ -2633,7 +1998,6 @@ class ValidateGapsV1Tests(unittest.TestCase):
 
     def test_unknown_top_level_field_fails(self) -> None:
         import tempfile
-        import textwrap
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as handle:
             handle.write(MINIMAL_FIXTURE.read_text() + "\nrogueField: nope\n")
@@ -2731,7 +2095,7 @@ controlAssessment:
   controlImplementations: []
 
 freshness:
-  reviewedAt: "2026-05-18"
+  reviewedAt: "2026-05-19"
   driftPolicy: >
     Update this fixture only when the v1 schema changes. The fixture exists
     to smoke-test the schema; it does not describe a real process.
@@ -2800,8 +2164,20 @@ def load_json(path: Path) -> Any:
 
 
 def validate_against_schema(data: Any, schema: dict[str, Any]) -> None:
-    """JSON Schema subset evaluator (same shape as validate-catalogs.py)."""
     errors: list[str] = []
+
+    def matches_type(value: Any, t: str) -> bool:
+        if t == "null":
+            return value is None
+        if t == "string":
+            return isinstance(value, str)
+        if t == "boolean":
+            return isinstance(value, bool)
+        if t == "object":
+            return isinstance(value, dict)
+        if t == "array":
+            return isinstance(value, list)
+        return False
 
     def check(node_data: Any, node_schema: dict[str, Any], path: str) -> None:
         if "const" in node_schema and node_data != node_schema["const"]:
@@ -2854,19 +2230,6 @@ def validate_against_schema(data: Any, schema: dict[str, Any]) -> None:
             if not isinstance(node_data, bool):
                 errors.append(f"{path}: expected boolean")
 
-    def matches_type(value: Any, t: str) -> bool:
-        if t == "null":
-            return value is None
-        if t == "string":
-            return isinstance(value, str)
-        if t == "boolean":
-            return isinstance(value, bool)
-        if t == "object":
-            return isinstance(value, dict)
-        if t == "array":
-            return isinstance(value, list)
-        return False
-
     check(data, schema, "$")
     if errors:
         raise ValidationError("\n".join(errors))
@@ -2912,7 +2275,7 @@ python3 scripts/validate-gaps-v1.py gaps/examples/v1/minimal/ga-process.v1.yml
 
 Expected: `GAPS v1 spec validated: gaps/examples/v1/minimal/ga-process.v1.yml`.
 
-- [ ] **Step 7: Commit Task 8**
+- [ ] **Step 7: Commit Task 7**
 
 ```bash
 git add scripts/validate-gaps-v1.py gaps/examples/v1/minimal/ga-process.v1.yml tests/gaps/v1/test_validate_gaps_v1.py
@@ -2921,7 +2284,7 @@ git commit -m "Add GAPS v1 schema validator and minimal fixture"
 
 ---
 
-### Task 9: Integrate v1 validators into repo-level validation and docs
+### Task 8: Integrate v1 validators into repo-level validation and docs
 
 **Files:**
 - Modify: `scripts/validate-governed-autonomy.sh`
@@ -2960,14 +2323,13 @@ for spec in gaps/examples/v1/*/ga-process.v1.yml; do
   python3 scripts/validate-gaps-v1.py "$spec"
 done
 
-echo "==> Checking OSCAL catalogs are up to date with sources"
-python3 scripts/build-oscal-catalogs.py --check
-
 echo "==> Running test suites"
 python3 -m unittest discover tests/gaps -v
 
 echo "All Governed Autonomy validation checks passed."
 ```
+
+Note: the OSCAL build-check line lands in Phase 1b. Phase 1a's suite intentionally does not invoke `build-oscal-catalogs.py` because the script does not yet exist.
 
 - [ ] **Step 3: Run the integrated validation suite**
 
@@ -2990,13 +2352,10 @@ deprecation window and uses a separate validator, schema, and catalogs:
 
 - `gaps/schema/v1/` — v1 JSON Schemas (ga-process + catalog meta-schemas).
 - `gaps/catalogs/v1/` — controlled vocabularies (actions, evidence kinds,
-  risk patterns) and OSCAL control catalogs (NIST AI RMF, ISO/IEC 42001
-  Annex A, EU AI Act).
+  risk patterns). OSCAL control catalogs follow in Phase 1b.
 - `gaps/examples/v1/` — v1 reference specs.
 - `scripts/validate-gaps-v1.py` — v1 structural schema validator.
 - `scripts/validate-catalogs.py` — catalog meta-validator.
-- `scripts/build-oscal-catalogs.py` — regenerates OSCAL JSON from compact
-  YAML sources.
 
 v1.0.0 adopts OSCAL structurally for evidence and control mappings, and
 adopts CMMN case-and-stage and DMN decision-table concepts conceptually in
@@ -3017,11 +2376,11 @@ python3 scripts/validate-gaps-v1.py gaps/examples/v1/minimal/ga-process.v1.yml
 ```
 ```
 
-- [ ] **Step 6: Final commit for Phase 1**
+- [ ] **Step 6: Final commit for Phase 1a**
 
 ```bash
 git add scripts/validate-governed-autonomy.sh gaps/README.md README.md
-git commit -m "Integrate GAPS v1 validators into repo validation suite"
+git commit -m "Integrate GAPS v1 GAPS-native validators into repo validation suite"
 ```
 
 - [ ] **Step 7: Confirm full validation passes**
@@ -3036,18 +2395,21 @@ Expected: exit 0; final line `All Governed Autonomy validation checks passed.`
 
 ## Self-Review Checklist
 
-- Every catalog file has a meta-schema, and every meta-schema is validated by `validate-catalogs.py`.
+- Every GAPS-native catalog file has a meta-schema, and every meta-schema is validated by `validate-catalogs.py`.
 - The v1 ga-process schema enforces `additionalProperties: false` on every closed structural block.
 - The minimal fixture validates at `descriptive` conformance and uses every required top-level field.
-- OSCAL catalogs are regenerable from human-readable YAML sources; `--check` mode detects drift.
+- The minimal fixture's `substrate.oscalControlCatalogs[]` references a path that does not yet exist; this is intentional and Phase 1b lands the file. The schema only checks string type.
 - Tests fail before implementation and pass after, for every script created.
 - v0.1 tooling is untouched; v0.1 specs continue to validate via the existing validator.
-- Cross-reference and semantic checks (`approvalRole` resolves, action ids resolve, state-machine soundness, gate decision completeness) are deferred to Phase 2 — not promised by Phase 1.
+- The catalog validator is scoped to GAPS-native catalogs only. OSCAL catalog validation is added in Phase 1b.
 
-## What Phase 1 does NOT do
+## What Phase 1a does NOT do
 
+- Does not ship OSCAL control catalogs (Phase 1b).
+- Does not ship `scripts/build-oscal-catalogs.py` (Phase 1b).
+- Does not validate OSCAL catalog files (Phase 1b extends `validate-catalogs.py`).
 - Does not validate that `authority.allowedActions[i]` resolves to an action catalog id (Phase 2).
-- Does not validate `state-machine soundness` or `gate decision completeness` (Phase 2).
+- Does not validate state-machine soundness or gate decision completeness (Phase 2).
 - Does not enforce conformance-level gating beyond schema-level field presence (Phase 2).
 - Does not port any v0.1 reference spec (Phase 3).
 - Does not generate skills from specs (Phase 4).
