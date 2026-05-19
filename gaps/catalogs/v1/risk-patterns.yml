@@ -1,0 +1,148 @@
+catalogId: risk-patterns
+catalogVersion: v1
+description: >
+  The nine governed-autonomy risk patterns formalized for spec-level reference.
+  Source: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md. Each
+  pattern includes signals an author can use to recognize the pattern,
+  default mitigations, and evidence kinds that typically substantiate the
+  mitigation.
+
+riskPatterns:
+  - id: chat-as-control-plane
+    label: Chat as a control plane
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#chat-as-a-control-plane
+    definition: >
+      Important process state, decisions, approvals, and evidence live inside
+      a chat thread rather than a governed system of record.
+    signals:
+      - "Approvals are made by chat reactions or short replies."
+      - "Reconstructing what was decided requires scrolling chat history."
+      - "External systems do not reflect current process state."
+    defaultMitigations:
+      - "Declare a canonical state source in projectionPolicy.canonicalStateSource."
+      - "Treat chat as a collaboration surface only."
+      - "Require gate decisions to write to canonical state."
+    exampleEvidenceKinds: [state-transition-event, gate-decision, approval-attestation]
+
+  - id: unbounded-delegation
+    label: Unbounded delegation
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#unbounded-delegation
+    definition: >
+      AI moves from advice to action without explicit limits on what it may
+      do, where it may act, or when it must stop.
+    signals:
+      - "Authority block has no explicit prohibitedActions."
+      - "No stop conditions or escalation criteria are defined for lanes."
+      - "Authority spans data-plane and control-plane without separation."
+    defaultMitigations:
+      - "Populate authority.allowedActions and authority.prohibitedActions from the action catalog."
+      - "Define explicit state-machine transitions and gates."
+      - "Separate control-plane actions into controlPlaneActions block."
+
+  - id: role-collapse
+    label: Role collapse
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#role-collapse
+    definition: >
+      One AI session silently becomes analyst, operator, designer, reviewer,
+      approver, and auditor.
+    signals:
+      - "A single role holds both producer and approver decision rights."
+      - "Same skill performs implementation and verification."
+      - "Approvals reference no named human role."
+    defaultMitigations:
+      - "Declare distinct roles in roles[] with non-overlapping canApprove[]."
+      - "Tag prohibited-anti-pattern action approve-own-work in prohibitedActions."
+      - "Require human_only autonomy tier on approval actions."
+    exampleEvidenceKinds: [approval-attestation, dual-control-attestation]
+
+  - id: evidence-drift
+    label: Evidence drift
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#evidence-drift
+    definition: >
+      Actions happen faster than evidence is captured; rationale and checks
+      are reconstructed after the fact.
+    signals:
+      - "Lanes lack evidenceOutputs."
+      - "Gates have no recordEvidence effect."
+      - "Audit-event retention is below regulatory for actions that need it."
+    defaultMitigations:
+      - "Define evidenceOutputs[] for every lane that records persistent change."
+      - "Add gate decision effects that recordEvidence at transition points."
+      - "Set retention to regulatory for approval-attestation, dual-control-attestation, gate-decision, state-transition-event."
+    exampleEvidenceKinds: [authority-invocation-event, state-transition-event, gate-decision]
+
+  - id: approval-theater
+    label: Approval theater
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#approval-theater
+    definition: >
+      Humans approve large bundles of AI-generated work without clear
+      evidence, alternatives, risk summary, or scope boundary.
+    signals:
+      - "Approval gates collapse multiple decisions into one."
+      - "Gate inputs reference no evidence items."
+      - "Approval decision rules are absent or trivial (always approve)."
+    defaultMitigations:
+      - "Require gates to declare decision.inputs that reference specific evidence items."
+      - "Require non-trivial decision.rules with explicit when expressions."
+      - "Split bundled gates into per-decision gates with distinct approvalConditions."
+
+  - id: tool-sprawl
+    label: Tool sprawl
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#tool-sprawl
+    definition: >
+      Autonomous work touches many systems, but no one can tell which system
+      holds canonical process state.
+    signals:
+      - "Multiple external systems are referenced without role assignment."
+      - "External systems perform mutations that affect process outcomes."
+      - "Canonical state source is undeclared."
+    defaultMitigations:
+      - "Declare projectionPolicy.canonicalStateSource and pathPattern."
+      - "Assign every external system a role (collaboration-surface, projection-target, or system-of-record)."
+      - "Require mutationRequiresApproval: true on systems that are not system-of-record."
+    exampleEvidenceKinds: [external-ticket-reference, external-state-snapshot]
+
+  - id: accountability-gaps
+    label: Accountability gaps
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#accountability-gaps
+    definition: >
+      When an AI-driven action causes harm or confusion, no named owner can
+      explain the decision or accept responsibility for correction.
+    signals:
+      - "Gates lack named approvalRole."
+      - "Lanes lack a human-affiliated role in autonomousResponsibilities oversight."
+      - "Roles lack accountabilityScope."
+    defaultMitigations:
+      - "Set approvalRole on every gate to a resolvable role id."
+      - "Populate accountabilityScope on every role."
+      - "Require record-evidence: authority-invocation-event for any action above defaultRiskTier medium."
+
+  - id: scope-creep-at-machine-speed
+    label: Scope creep at machine speed
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#scope-creep-at-machine-speed
+    definition: >
+      A narrow request expands into broader operational change because the AI
+      infers additional tasks and executes them.
+    signals:
+      - "No scope-decision evidence required before execution."
+      - "No transition guards reference scope boundaries."
+      - "prohibitedActions does not include expand-scope-silently."
+    defaultMitigations:
+      - "Require scope-decision evidence before control-plane execution gates."
+      - "Add prohibitedActions: [expand-scope-silently] to data-plane execution lanes."
+      - "Define transitions that exit to escalate-to-human when scope boundary breached."
+
+  - id: post-hoc-governance
+    label: Post-hoc governance
+    docReference: docs/governed-autonomy/uncontrolled-ai-risk-patterns.md#post-hoc-governance
+    definition: >
+      Controls are added only after an AI workflow already exists and has
+      started producing operational effects.
+    signals:
+      - "controlAssessment is empty or all controls are mappingStatus: planned."
+      - "Spec was written after skills shipped."
+      - "Skills have no GAPS implementation map binding."
+    defaultMitigations:
+      - "Require controlAssessment.controlImplementations[] entries for every shipped lane."
+      - "Bind every skill to a lane via implementation map before activation."
+      - "Run validate-gaps-v1 in CI before any skill change merges."
