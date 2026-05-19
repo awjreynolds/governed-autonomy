@@ -53,6 +53,8 @@ deprecation window and uses a separate validator, schema, and catalogs:
 - `scripts/validate-gaps-v1.py` — v1 structural schema validator.
 - `scripts/validate-catalogs.py` — catalog meta-validator.
 
+The v1.0.0 reference docs live at `docs/governed-autonomy/gaps/`.
+
 v1.0.0 adopts OSCAL structurally for evidence and control mappings, and
 adopts CMMN case-and-stage and DMN decision-table concepts conceptually in
 GAPS-native YAML. See `docs/superpowers/specs/2026-05-18-gaps-v1-0-0-design.md`

@@ -22,6 +22,7 @@ The useful unit is the process, not the task. A task can look safe in isolation 
 ## Where to start
 
 - [GAPS](gaps.html) explains the Governed Autonomy Process Specification profile.
+- [GAPS v1.0.0 reference](governed-autonomy/gaps/) documents the v1 format, catalogs, generator, and round-trip discipline.
 - [Reference processes](examples.html) shows the current validated examples.
 - [Quickstart](quickstart.html) shows how to validate and generate reviewable package skeletons.
 - [Operating model](governed-autonomy/operating-model.html) explains the broader governance model.
