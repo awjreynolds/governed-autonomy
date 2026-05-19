@@ -1,0 +1,75 @@
+gapsVersion: "1.0.0"
+specStatus: draft
+conformanceLevel: descriptive
+
+process:
+  id: invalid-duplicate-gate
+  name: Invalid fixture - duplicate gate id
+  purpose: Triggers cross-refs rule for unique gate ids.
+  scope:
+    includes: [test fixture]
+    excludes: [any real process]
+
+substrate:
+  oscalControlCatalogs:
+    - gaps/catalogs/v1/controls/nist-ai-rmf.json
+  actionCatalog: gaps/catalogs/v1/actions.yml
+  evidenceCatalog: gaps/catalogs/v1/evidence-kinds.yml
+  riskPatternCatalog: gaps/catalogs/v1/risk-patterns.yml
+
+roles:
+  - id: process_owner
+    label: Process owner
+    accountabilityScope: Test fixture only.
+
+evidenceModel:
+  caseFileItems:
+    - id: dummy-evidence
+      kind: context-observation
+      label: Dummy
+      producer: lane:single_lane
+      consumer:
+        - role:process_owner
+
+lanes:
+  - id: single_lane
+    label: Single lane
+    purpose: Test only.
+    authority:
+      plane: data_plane
+      autonomyTier: draft
+      riskTier: low
+      allowedActions:
+        - draft-artifact
+      prohibitedActions:
+        - approve-own-work
+    skills:
+      - test-fixture-skill
+
+gates:
+  - id: same_id
+    label: First
+    gateType: validating
+    approvalRole: process_owner
+  - id: same_id
+    label: Second
+    gateType: validating
+    approvalRole: process_owner
+
+projectionPolicy:
+  canonicalStateSource: repo-local-ledger
+  pathPattern: state/**
+
+riskPatterns:
+  - patternRef: post-hoc-governance
+    mitigations: [N/A]
+
+controlAssessment:
+  catalogRefs: []
+  controlImplementations: []
+
+freshness:
+  reviewedAt: "2026-05-18"
+  driftPolicy: Test fixture.
+
+knownGaps: []
