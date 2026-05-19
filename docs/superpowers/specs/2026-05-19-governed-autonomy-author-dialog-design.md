@@ -84,7 +84,7 @@ roles:
 
 authority:
   default_autonomy_tier: draft
-  allowed_actions:
+  default_allowed_actions:
     - catalog:action:draft-artifact
     - catalog:action:run-verification
     - local:open-pr
@@ -94,8 +94,12 @@ authority:
     - local:merge-to-main
 
 local_definitions:
-  open-pr: Open a pull request against the integration branch with the drafted change set.
-  merge-to-main: Push or merge any commit onto the main branch directly without an approved gate.
+  open-pr:
+    definition: Open a pull request against the integration branch with the drafted change set.
+    category: data-plane-external
+  merge-to-main:
+    definition: Push or merge any commit onto the main branch directly without an approved gate.
+    category: data-plane-persist
 
 input_gates:
   - A linked spec or ticket exists.
@@ -175,18 +179,20 @@ knownGaps: []
 Conventions:
 
 - **Namespaced refs everywhere** — `catalog:…`, `local:…`, `role:…`, `step:…`, `lane:…`, `evidence:…`. Every internal reference uses a prefix. No bare ids inside the file.
-- **`local_definitions` is top-level** — `local:` refs may appear anywhere in the file (actions, evidence, escalation conditions). Every `local:` ref must have an entry in the top-level `local_definitions` map of at least 20 characters.
+- **`local_definitions` is top-level and structured** — `local:` refs may appear anywhere in the file (actions, evidence, escalation conditions). Every `local:` ref must have an entry in the top-level `local_definitions` map with two fields: `definition` (string, ≥20 chars) and `category` (string, the catalog action category vocabulary: `data-plane-read | data-plane-draft | data-plane-persist | data-plane-external | control-plane | meta | prohibited-anti-pattern`). The category is required because `E011` cannot decide read-vs-write semantics from prose alone.
+- **`step_kind` enum** — `steps[*].step_kind` is one of: `execute` (produces a work product), `investigate` (read-only, produces findings), `decide` (routes or classifies), `approve` (human gates a transition), `monitor` (ongoing observation). The enum is closed; lint rejects values outside it.
 - **`steps[*].requires_role` is required** — every step names the role responsible for executing it. For agent-executable steps, this is the autonomous agent role (`role:agent`). For human steps, a human role. This field makes ownership deterministic and powers `W009`.
-- **What `authority.allowed_actions` means vs `authority.prohibited_actions`**:
-  - `authority.prohibited_actions` is the **hard ceiling**. No step can do anything in this set. Step-level prohibitions are additive and non-removable. This is the load-bearing safety constraint that makes the governance model actually safe.
-  - `authority.allowed_actions` is the **default affirmative list** for steps that don't override. It is not a process-wide authority boundary. Steps may declare entirely different allowed actions (an investigate step that does only reads, when the process default is draft-write). There is no process-wide "total authority" concept — authority is per-step, scoped by each step's effective allowed set minus the inherited prohibitions.
-  - Practical consequence: `authority.allowed_actions` at process level says "this is what most steps do by default," not "this is the maximum permitted across the whole process." Authors who want a hard maximum must express it as prohibitions.
+- **`default_allowed_actions` (process level) vs `allowed_actions` (step level)**: the field names encode the semantic difference.
+  - `authority.default_allowed_actions` is the **process-level default**. It says "this is what most steps do." It is not a process-wide authority boundary. Steps may declare entirely different allowed actions (an investigate step that does only reads, when the process default is draft-write).
+  - `steps[*].authority_overrides.allowed_actions` is the **step-level boundary**. For that step, this set (when present) is the actual list of allowed actions.
+  - `authority.prohibited_actions` is the **hard ceiling**. No step can do anything in this set. Step-level prohibitions are additive and non-removable. This is the load-bearing safety constraint.
+  - There is no process-wide "total authority" concept — authority is per-step, scoped by each step's effective allowed set minus the inherited prohibitions. Authors who want a hard maximum must express it as prohibitions.
 - **Step authority merge semantics**:
   - `authority_overrides.allowed_actions`, when present at step level, **replaces** the process default. Steps may set an allowed action that is not in the process default.
   - `authority_overrides.prohibited_actions` is **unioned** with the process-level prohibitions. Step-level prohibited additions are allowed; step-level *removals* of inherited prohibitions are not. Rationale: prohibitions are safety constraints — a step cannot weaken them. This is the actual mechanism that keeps step-level discretion bounded.
   - `authority_overrides.autonomy_tier`, when present, **replaces** the process default for that step.
   - `authority_overrides.justification`, when present, is a free-text string explaining why this step deviates from the process default. Required by `W005` whenever the step's autonomy tier is more permissive than the process default.
-  - **Effective allowed** = step allowed (if set) else process allowed. **Effective prohibited** = process prohibited ∪ step prohibited.
+  - **Effective allowed** = step `authority_overrides.allowed_actions` (if set) else process `default_allowed_actions`. **Effective prohibited** = process `prohibited_actions` ∪ step `authority_overrides.prohibited_actions`.
   - `E005` fires when any action appears in both effective allowed and effective prohibited.
 - **Autonomy tier lattice** (least to most permissive): `human_only < assist < recommend < draft < execute_with_approval < execute_within_limits < autonomous_with_monitoring`. Used by `W005` to detect step-level escalation of autonomy.
 - **One file per process** — process-level decisions belong together; splitting per-step creates drift.
@@ -332,10 +338,10 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 
 | Rule | Check |
 |---|---|
-| `E001` core-field-missing | `process.id`, `process.name`, `roles`, `authority.allowed_actions` AND `authority.prohibited_actions` (both non-empty), `evidence.destination`, at least one `escalation` entry. Both sides of authority must be populated because "what the agent must not do" is load-bearing on its own; missing it produces ungoverned actions by omission. |
+| `E001` core-field-missing | `process.id`, `process.name`, `roles`, `authority.default_allowed_actions` AND `authority.prohibited_actions` (both non-empty), `evidence.destination`, at least one `escalation` entry. Both sides of authority must be populated because "what the agent must not do" is load-bearing on its own; missing it produces ungoverned actions by omission. |
 | `E002` accountable-role-absent | At least one role has `accountable_for` that is not `nothing`/empty |
 | `E003a` catalog-ref-missing | A `catalog:` ref does not exist in the referenced catalog |
-| `E003b` local-ref-undefined | A `local:` ref has no entry in `local_definitions` or its definition is under 20 chars |
+| `E003b` local-ref-undefined | A `local:` ref has no entry in `local_definitions`, or its `definition` is under 20 chars, or its `category` field is missing or not one of the catalog action-category values |
 | `E003c` internal-ref-missing | A `role:`/`step:`/`lane:`/`evidence:` ref does not exist in the file |
 | `E004` self-approval | For any gate, `gate.requires_role` must not equal `requires_role` of any step that (a) produces an evidence item the gate requires AND (b) has `step_kind: execute`. Catches the anti-pattern of the same role both executing the work product and approving it. Reviewer/approver workflows where a reviewer produces a verification finding and then approves are explicitly allowed — those producing steps are `investigate` or `monitor`, not `execute`. |
 | `E005` action-conflict | Same action in both `allowed_actions` and `prohibited_actions` after step-override merge |
@@ -344,8 +350,10 @@ The dialog proposes an explicit investigation step when phase 5 (risk) or phase 
 | `E008` frontmatter-mismatch | A `SKILL.md` `governance.step` doesn't resolve, or `governance.process` path doesn't resolve to this file |
 | `E009` agent-accountable | A role with `autonomous: true` has `accountable_for` set to a value that is not empty and not the sentinel `nothing`. The sentinel `nothing` is the explicit "this role owns no accountability" marker and is the recommended value for autonomous roles. (Operating model: agents do not own accountability.) |
 | `E010` dead-gate | A gate requires evidence that no step produces |
-| `E011` investigate-with-write | A `step_kind: investigate` step's effective allowed actions (after merge) include any catalog action whose `category` is not `data-plane-read`. The `meta` category is **not** whitelisted because it includes mutating actions (`record-known-gap`, `archive-closed-work`, etc.). If an investigation must ask a human, split it into a read-only investigate step followed by a separate escalate/ask step. |
+| `E011` investigate-with-write | A `step_kind: investigate` step's effective allowed actions (after merge) include any action whose category is not `data-plane-read`. Catalog actions are checked by their declared `category`; `local:` actions are checked by the `category` field on their `local_definitions` entry. The `meta` category is **not** whitelisted because it includes mutating actions (`record-known-gap`, `archive-closed-work`, etc.). If an investigation must ask a human, split it into a read-only investigate step followed by a separate escalate/ask step. |
 | `E012` step-role-missing | Every entry in `steps[*]` has a `requires_role` field whose value resolves to a defined role. There is no inheritance — each step names its responsible role explicitly. |
+| `E013` steps-missing | `steps` is non-empty. A `governance.yml` with zero steps cannot be a process; even a single-skill process has one entry. |
+| `E014` step-kind-invalid | Every `steps[*].step_kind` is one of the closed enum: `execute`, `investigate`, `decide`, `approve`, `monitor`. |
 
 ### Warnings
 
