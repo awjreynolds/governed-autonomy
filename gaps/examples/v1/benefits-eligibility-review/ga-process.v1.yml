@@ -1,6 +1,6 @@
 gapsVersion: "1.0.0"
 specStatus: draft
-conformanceLevel: machine-validatable
+conformanceLevel: generative
 
 process:
   id: benefits-eligibility-review
@@ -251,6 +251,12 @@ lanes:
         - id: t-in-progress-to-complete
           from: gathering_in_progress
           to: gathering_complete
+          guard:
+            inputs: [supporting-evidence]
+            rules:
+              - when: defined(supporting-evidence)
+                then: allow
+            else: block
         - id: t-breached-to-abandoned
           from: gathering_breached
           to: gathering_abandoned
@@ -510,16 +516,15 @@ controlAssessment:
 freshness:
   reviewedAt: "2026-05-18"
   driftPolicy: >
-    This reference spec is authored deliberately at machine-validatable
-    conformance to stress-test GAPS v1 on a non-software process.
-    Promote to generative only when paired with a generated skill package
-    and round-trip verification.
+    This reference spec is authored at generative conformance to stress-test
+    GAPS v1 on a non-software process. Keep the generated skill package
+    byte-identical to the spec-derived output.
 
 knownGaps:
-  - id: machine-validatable-not-generative
-    summary: This spec is machine-validatable; the state model and gate decisions are not yet exercised against a generated skill package.
+  - id: round-trip-verification-pending
+    summary: This generative spec is exercised against a generated skill package, but spec-to-skill round-trip diffing remains Phase 5 work.
     severity: minor
-    plannedResolution: phase-4-generator
+    plannedResolution: phase-5-round-trip
   - id: no-localActions
     summary: Spec deliberately avoids process.localActions to validate that the universal catalog is sufficient for a casework process.
     severity: minor

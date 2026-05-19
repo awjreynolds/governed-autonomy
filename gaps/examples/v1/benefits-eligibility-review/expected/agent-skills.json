@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "name": "benefits-eligibility-review",
+  "displayName": "Benefits eligibility review",
+  "version": "0.1.0",
+  "description": "Governed review of an applicant's eligibility for a publicly funded benefit, applied as a generic casework reference spec. The process illustrates how GAPS handles adaptive state, time-limit milestones, and multi-authority escalation outside of software delivery.",
+  "license": "MIT",
+  "canonicalSkillRoot": "skills",
+  "commands": [
+    {
+      "command": "/benefits-eligibility-review:intake_lane",
+      "skill": "benefits-eligibility-review-intake-lane",
+      "path": "skills/benefits-eligibility-review-intake-lane",
+      "purpose": "Receive and normalize an eligibility request, confirming identity."
+    },
+    {
+      "command": "/benefits-eligibility-review:evidence_gathering_lane",
+      "skill": "benefits-eligibility-review-evidence-gathering-lane",
+      "path": "skills/benefits-eligibility-review-evidence-gathering-lane",
+      "purpose": "Request and collect supporting evidence within the service-standard time limit."
+    },
+    {
+      "command": "/benefits-eligibility-review:assessment_lane",
+      "skill": "benefits-eligibility-review-assessment-lane",
+      "path": "skills/benefits-eligibility-review-assessment-lane",
+      "purpose": "Draft the eligibility assessment using the gathered evidence."
+    },
+    {
+      "command": "/benefits-eligibility-review:decision_communication_lane",
+      "skill": "benefits-eligibility-review-decision-communication-lane",
+      "path": "skills/benefits-eligibility-review-decision-communication-lane",
+      "purpose": "Communicate the approved decision to the applicant."
+    }
+  ],
+  "generatedBy": "gaps-v1-generator"
+}
