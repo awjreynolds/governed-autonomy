@@ -36,6 +36,13 @@ python3 scripts/validate-gaps-implementation.py
 python3 -m unittest discover tests/gaps
 ```
 
+Run the v1 validators (incubation):
+
+```bash
+python3 scripts/validate-catalogs.py
+python3 scripts/validate-gaps-v1.py gaps/examples/v1/minimal/ga-process.v1.yml
+```
+
 Generate a reviewable skill package from a GAPS process:
 
 ```bash
