@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from gaps_v1_migrator.match import fuzzy_action_match  # noqa: E402
+from gaps_v1_migrator.render import render  # noqa: E402
 
 
 CATALOG = [
@@ -48,6 +49,31 @@ class FuzzyActionMatchTests(unittest.TestCase):
         match, score = fuzzy_action_match("xylophone purple wombat hatstand", CATALOG)
         self.assertIsNone(match)
         self.assertLess(score, 0.2)
+
+
+class RendererTests(unittest.TestCase):
+    def test_renderer_uses_canonical_key_order_for_nested_documents(self) -> None:
+        rendered = render({
+            "process": {
+                "scope": {
+                    "excludes": [],
+                    "includes": ["a", "b"],
+                },
+                "id": "demo",
+            },
+            "gapsVersion": "1.0.0",
+        })
+        self.assertEqual(
+            rendered,
+            "gapsVersion: 1.0.0\n"
+            "process:\n"
+            "  id: demo\n"
+            "  scope:\n"
+            "    includes:\n"
+            "      - a\n"
+            "      - b\n"
+            "    excludes: []\n",
+        )
 
 
 if __name__ == "__main__":

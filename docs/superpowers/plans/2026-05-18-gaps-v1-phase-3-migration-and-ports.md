@@ -267,6 +267,7 @@ def _key_sort(key: str) -> tuple[int, str]:
 
 
 _PLAIN_SAFE = re.compile(r"^[A-Za-z_][A-Za-z0-9_./:\-]*$")
+_VERSION_SAFE = re.compile(r"^[0-9]+(?:\.[0-9]+)+$")
 
 
 def _scalar(value: Any) -> str:
@@ -285,7 +286,10 @@ def _scalar(value: Any) -> str:
     if "\n" in value or len(value) > 72:
         body = "\n".join("  " + line for line in value.rstrip().splitlines())
         return ">\n" + body
-    if _PLAIN_SAFE.match(value) and value not in {"true", "false", "null", "yes", "no", "on", "off", "~"}:
+    if (
+        (_PLAIN_SAFE.match(value) or _VERSION_SAFE.match(value))
+        and value not in {"true", "false", "null", "yes", "no", "on", "off", "~"}
+    ):
         return value
     return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
