@@ -61,6 +61,14 @@ Core quality refusal blocks emit. Non-core contradictions become warnings or kno
 
 ## Emit
 
-Phase 11 writes `governance.yml`, per-step `SKILL.md` files, and `governance-validation.md`. The author then runs `ga-lint` when available. Lint errors after emit are treated as authoring defects, not user success. Lint warnings are persisted into `warnings:`.
+Phase 11 builds a draft `governance.yml` in conversation state first. The author pipes that draft into `ga-lint --stdin --json` before writing files. Lint errors block emit and route the dialog back to the offending phase. Lint warnings are persisted into `warnings:` but do not block emit.
+
+Only after clean pre-emit lint does Phase 11 write `governance.yml`, per-step `SKILL.md` files, and `governance-validation.md`. The author then runs `ga-lint` again as a post-emit sanity check. A post-emit lint error after clean pre-emit lint is a dialog bug, not user success.
 
 State is conversation-only until emit. Abandoning the conversation loses the authoring state unless the user explicitly asks for a draft note.
+
+## Status of the dialog
+
+The dialog proves that the four hard-refusal fields are populated. It proves that the emitted sidecar is mechanically valid because it passes `ga-lint`. It proves that LLM-judged quality probes were applied.
+
+It does not prove that the resulting process is well-governed. It does not prove that load-bearing judgments are reliable across runs. It does not prove that runtime behavior conforms to the sidecar. Runtime enforcement is a separate concern, covered by Plan A in this directory.

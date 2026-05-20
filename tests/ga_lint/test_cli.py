@@ -78,13 +78,14 @@ def write_fixture(root: Path, governance: str = VALID_GOVERNANCE) -> Path:
 
 
 class CliTests(unittest.TestCase):
-    def run_cli(self, *args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    def run_cli(self, *args: str, cwd: Path | None = None, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT)
         return subprocess.run(
             ["python3", "-m", "scripts.ga_lint.cli", *args],
             cwd=cwd or ROOT,
             env=env,
+            input=input_text,
             text=True,
             capture_output=True,
             check=False,
@@ -110,6 +111,39 @@ class CliTests(unittest.TestCase):
             process = write_fixture(Path(tmp))
             child = process / "skills" / "design"
             result = self.run_cli(cwd=child)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+    def test_stdin_valid_payload_matches_file_path_json(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            process = write_fixture(Path(tmp))
+            governance = process / "governance.yml"
+            file_result = self.run_cli("--json", str(governance))
+            stdin_result = self.run_cli("--stdin", "--json", cwd=process, input_text=governance.read_text(encoding="utf-8"))
+            self.assertEqual(stdin_result.returncode, file_result.returncode, stdin_result.stderr + stdin_result.stdout)
+            self.assertEqual(json.loads(stdin_result.stdout), json.loads(file_result.stdout))
+
+    def test_stdin_valid_payload_does_not_require_governance_file(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            process = write_fixture(Path(tmp))
+            governance = process / "governance.yml"
+            payload = governance.read_text(encoding="utf-8")
+            governance.unlink()
+            result = self.run_cli("--stdin", cwd=process, input_text=payload)
+            self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+            self.assertFalse(governance.exists())
+
+    def test_stdin_malformed_yaml_exits_nonzero_with_stderr(self) -> None:
+        result = self.run_cli("--stdin", input_text="governanceVersion: [")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, "")
+        self.assertNotEqual(result.stderr.strip(), "")
+
+    def test_stdin_ignores_positional_path_arguments(self) -> None:
+        with tempfile.TemporaryDirectory(dir=ROOT) as tmp:
+            process = write_fixture(Path(tmp))
+            bad = process / "bad-governance.yml"
+            bad.write_text("governanceVersion: [", encoding="utf-8")
+            result = self.run_cli("--stdin", str(bad), cwd=process, input_text=(process / "governance.yml").read_text(encoding="utf-8"))
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
 
 

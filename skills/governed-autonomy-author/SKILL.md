@@ -156,9 +156,11 @@ Accept inheritance by default. Record `authority_overrides` only where a step de
 
 Primary question: where should the process directory be written, and are the accepted claims ready to emit?
 
-Before writing, summarize the process, hard-refusal fields, warnings, known gaps, and target directory. If the user changes a core answer, return to the relevant phase.
+Before writing, build the draft `governance.yml` in conversation state. Summarize the process, hard-refusal fields, warnings, known gaps, and target directory. If the user changes a core answer, return to the relevant phase.
 
-Write:
+Pipe the draft into `scripts/ga-lint --stdin --json` when available. If lint reports errors, return to the offending phase and write no files. If lint reports warnings, persist them in `warnings:` and summarize them. Warnings do not block emit.
+
+Only after clean pre-emit lint, write:
 
 - `<process-dir>/governance.yml`
 - `<process-dir>/governance-validation.md`
@@ -166,7 +168,7 @@ Write:
 - optional `<process-dir>/commands/<process-id>.md` only when an orchestrator command is explicitly part of the process
 - optional `<process-dir>/ga-process.v1.yml` when `--emit-spec` is set
 
-After writing, run `ga-lint <process-dir>/governance.yml` when available. If lint reports warnings, persist them in `warnings:` and summarize them. If lint reports errors, report that the dialog emitted invalid governance and do not claim success.
+After writing, run `ga-lint <process-dir>/governance.yml` when available as a sanity check. If lint fails after a clean pre-emit lint, report this as a bug in the dialog, not as a user error, and do not claim success.
 
 When `--emit-spec` is set, generate the GAPS v1 projection from the accepted conversation state, write `<process-dir>/ga-process.v1.yml`, and run `python3 scripts/validate-gaps-v1.py <process-dir>/ga-process.v1.yml`. If validation fails, keep `governance.yml` as canonical and report the spec projection failure.
 

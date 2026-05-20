@@ -24,7 +24,7 @@ Warnings include missing drift policy, unknown blast radius, evidence without co
 
 ## Relationship to Author and Critique
 
-`/governed-autonomy:author` runs lint after Phase 11 emit. Lint errors after emit mean the dialog emitted invalid governance and must be corrected. Lint warnings are persisted into `warnings:` by the author skill.
+`/governed-autonomy:author` now runs lint on a draft before Phase 11 emit. The draft is piped through `ga-lint --stdin --json`, so mechanical errors block file writes. The author still runs the existing post-emit lint sanity check. Lint warnings are persisted into `warnings:` by the author skill.
 
 `/governed-autonomy:critique` runs lint as a baseline, then adds judgment over the operating model.
 
