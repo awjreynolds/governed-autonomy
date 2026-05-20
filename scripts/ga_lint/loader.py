@@ -27,6 +27,25 @@ def load_yaml(path: Path) -> Any:
     return json.loads(result.stdout)
 
 
+def load_yaml_text(text: str) -> Any:
+    result = subprocess.run(
+        [
+            "ruby",
+            "-ryaml",
+            "-rjson",
+            "-e",
+            "print YAML.load(STDIN.read).to_json",
+        ],
+        input=text,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"failed to load stdin: {result.stderr.strip()}")
+    return json.loads(result.stdout)
+
+
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -47,4 +66,3 @@ def resolve_repo_path(anchor: Path, value: str) -> Path:
     if candidate.is_absolute():
         return candidate
     return find_repo_root(anchor) / candidate
-

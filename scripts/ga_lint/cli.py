@@ -10,13 +10,14 @@ from pathlib import Path
 from .catalog import load_catalogs
 from .discovery import discover_governance
 from .errors import ValidationReport
-from .loader import find_repo_root, load_yaml
+from .loader import find_repo_root, load_yaml, load_yaml_text
 from .rules import lint
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ga-lint")
-    parser.add_argument("path", nargs="?", help="Path to governance.yml or a directory to discover from")
+    parser.add_argument("path", nargs="*", help="Path to governance.yml or a directory to discover from")
+    parser.add_argument("--stdin", action="store_true", help="Read governance YAML from stdin")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON")
     return parser
 
@@ -24,9 +25,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if not args.stdin and len(args.path) > 1:
+        parser.error("expected at most one path")
     try:
-        target = discover_governance(Path(args.path) if args.path else Path.cwd())
-        doc = load_yaml(target)
+        if args.stdin:
+            target = Path.cwd() / "governance.yml"
+            doc = load_yaml_text(sys.stdin.read())
+        else:
+            target = discover_governance(Path(args.path[0]) if args.path else Path.cwd())
+            doc = load_yaml(target)
         report = ValidationReport(lint(doc, target, load_catalogs(find_repo_root(target))))
     except Exception as exc:  # noqa: BLE001 - CLI should return clean diagnostics
         if args.json:
@@ -57,4 +64,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
