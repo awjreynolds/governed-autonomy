@@ -1,0 +1,67 @@
+governanceVersion: "1"
+process:
+  id: enforced-sample
+  name: Enforced sample
+  purpose: Exercise runtime enforcement hooks.
+roles:
+  - id: owner
+    label: Owner
+    accountable_for: Runtime enforcement decisions.
+  - id: agent
+    label: Agent
+    autonomous: true
+    accountable_for: nothing
+authority:
+  default_autonomy_tier: draft
+  default_allowed_actions: ["catalog:action:draft-artifact"]
+  prohibited_actions: ["catalog:action:approve-own-work"]
+risk:
+  blast_radius: repository
+evidence:
+  destination: repo
+  items:
+    - id: draft-record
+      kind: "catalog:evidence:design-decision"
+      producer: "step:draft"
+      consumer: ["role:owner"]
+      path: evidence/draft.md
+gates:
+  - id: pre-close
+    requires_role: "role:owner"
+    requires_evidence: ["evidence:draft-record"]
+    blocks_steps: ["step:close"]
+escalation:
+  - condition: enforcement-blocked
+    to: "role:owner"
+state:
+  canonical: repo
+  projections: []
+freshness:
+  drift_policy: Review when enforcement mappings change.
+enforcement:
+  tool_action_map:
+    catalog:action:approve-own-work:
+      - "Bash(git push *)"
+    catalog:action:draft-artifact:
+      - "Write"
+      - "Edit(*)"
+steps:
+  - id: draft
+    label: Draft
+    purpose: Draft governed evidence for owner review.
+    step_kind: execute
+    requires_role: "role:agent"
+  - id: investigate
+    label: Investigate
+    purpose: Read context before drafting governed evidence.
+    step_kind: investigate
+    requires_role: "role:agent"
+    authority_overrides:
+      allowed_actions: ["catalog:action:gather-context"]
+  - id: close
+    label: Close
+    purpose: Close the sample after evidence review.
+    step_kind: approve
+    requires_role: "role:owner"
+    authority_overrides:
+      autonomy_tier: human_only

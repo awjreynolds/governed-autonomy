@@ -179,6 +179,22 @@ def lint(doc: dict[str, Any], governance_path: Path, catalog: CatalogIndex, skil
                 if category != "data-plane-read":
                     issues.append(_issue("E011", f"steps.{step_id}.authority.allowed_actions", f"investigate step allows non-read action {action}"))
 
+    # E015
+    enforcement = doc.get("enforcement")
+    if enforcement is not None:
+        if not isinstance(enforcement, dict):
+            issues.append(_issue("E015", "enforcement", "enforcement must be an object when present"))
+        else:
+            tool_action_map = enforcement.get("tool_action_map")
+            if tool_action_map is not None and not isinstance(tool_action_map, dict):
+                issues.append(_issue("E015", "enforcement.tool_action_map", "tool_action_map must be an object when present"))
+            elif isinstance(tool_action_map, dict):
+                for action_ref, patterns in tool_action_map.items():
+                    if not isinstance(action_ref, str) or not (action_ref.startswith("catalog:") or action_ref.startswith("local:")):
+                        issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map keys must be action refs"))
+                    if not isinstance(patterns, list) or not all(isinstance(pattern, str) and pattern.strip() for pattern in patterns):
+                        issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map values must be non-empty string arrays"))
+
     # E007 / E008
     if skills_dir.exists():
         for skill_file in skills_dir.glob("*/SKILL.md"):
@@ -219,4 +235,3 @@ def lint_file(path: Path) -> list[ValidationIssue]:
 
     doc = load_yaml(path)
     return lint(doc, path, load_catalogs(find_repo_root(path)))
-

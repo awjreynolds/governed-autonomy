@@ -75,6 +75,28 @@ If an action is both effectively allowed and prohibited, lint should report an e
 
 Investigation steps are read-only by definition. If an investigation needs to ask a human or write a record, split that into a later step.
 
+## Enforcement
+
+`enforcement.tool_action_map` is optional. When absent, the sidecar remains advisory. Runtime behavior is unchanged.
+
+When present, `tool_action_map` maps an action ref to Claude Code tool-call patterns:
+
+```yaml
+enforcement:
+  tool_action_map:
+    catalog:action:approve-own-work:
+      - "Bash(git push *)"
+    catalog:action:draft-artifact:
+      - "Write"
+      - "Edit(*)"
+```
+
+The map does not grant authority. It only lets the runtime identify which governed action a pending tool call represents. The active step still uses the authority merge rules above. If the matched action is effectively prohibited for that step, the PreToolUse hook blocks the call.
+
+The hook also blocks write tools during `investigate` steps. PostToolUse can check declared evidence presence when an active step is marked done. It checks files named by `evidence.items[*].path` under the process directory when `evidence.destination` is `repo`.
+
+Hook enforcement constrains tool calls and evidence presence. It does not inspect model reasoning, infer scope, detect cross-tool collusion, or govern anything outside the Claude Code hook harness.
+
 ## Skill Frontmatter
 
 Each generated step skill includes governance frontmatter:
