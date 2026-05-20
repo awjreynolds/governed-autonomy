@@ -159,6 +159,9 @@ class RuleTests(unittest.TestCase):
     def test_e014_step_kind_invalid(self) -> None:
         self.check_rule("E014", lambda doc, _root: doc["steps"][0].update({"step_kind": "teleport"}))
 
+    def test_e015_enforcement_block_malformed(self) -> None:
+        self.check_rule("E015", lambda doc, _root: doc.update({"enforcement": {"tool_action_map": {"catalog:action:draft-artifact": "Write"}}}))
+
     def test_warnings(self) -> None:
         mutations = {
             "W001": lambda doc: doc.pop("freshness"),
@@ -182,4 +185,3 @@ class RuleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

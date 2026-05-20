@@ -290,6 +290,19 @@
         }
       }
     },
+    "enforcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tool_action_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
     "riskPatterns": {
       "type": "array",
       "items": {

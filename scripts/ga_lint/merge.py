@@ -24,3 +24,10 @@ def merge_authority(authority: dict[str, Any], step: dict[str, Any]) -> Effectiv
     autonomy = overrides.get("autonomy_tier", authority.get("default_autonomy_tier"))
     return EffectiveAuthority(autonomy_tier=autonomy, allowed_actions=allowed, prohibited_actions=prohibited)
 
+
+def effective_authority_for_step(doc: dict[str, Any], step_id: str) -> EffectiveAuthority:
+    authority = doc.get("authority") if isinstance(doc.get("authority"), dict) else {}
+    for step in doc.get("steps") or []:
+        if isinstance(step, dict) and step.get("id") == step_id:
+            return merge_authority(authority, step)
+    return merge_authority(authority, {})

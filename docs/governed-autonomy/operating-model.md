@@ -67,6 +67,14 @@ Important process state should not live only in chat. Governed processes need a 
 
 Most organizations don't get to invent a new stack. Planning systems, ticketing systems, case-management tools, spreadsheets, workflow platforms, and documents can project status and review information from the canonical record. They will drift into being treated as the source of truth unless the operating model says, in writing, that they aren't.
 
+## 10. Runtime enforcement
+
+Governance should reach the runtime when the harness supports it. A Claude Code hook can block a tool call before it runs when the active step maps that call to an effectively prohibited action. It can also keep an investigation step read-only by blocking write tools.
+
+Post-run hooks can check that declared evidence files exist before a step is accepted as done. This is a presence check. It does not prove the evidence is true, sufficient, or well judged.
+
+Hooks cannot govern model reasoning. They cannot infer business scope, detect cross-tool collusion, or control tools outside the harness. They are a runtime guardrail around calls and files, not a substitute for authority, evidence, escalation, and approval design.
+
 ## Read next
 
 - [Process assessment](process-assessment.md) turns this model into an assessment path for a real business process.
