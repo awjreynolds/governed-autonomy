@@ -20,6 +20,9 @@ python3 -m unittest discover tests/ga_lint -v
 echo "==> Running ga-enforce tests"
 python3 -m unittest discover tests/ga_enforce -v
 
+echo "==> Running GADD parity tests"
+python3 -m unittest discover tests/gadd_parity -v
+
 echo "==> Running author exemplar harness"
 python3 tests/author/run_phase_exemplars.py
 

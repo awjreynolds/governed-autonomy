@@ -1,0 +1,41 @@
+contracts:
+  /gadd:next:
+    required_phrases:
+      - "/gadd:research"
+      - "/gadd:scope"
+      - "/gadd:elaborate"
+      - "/gadd:refine"
+      - "/gadd:design"
+      - "/gadd:plan"
+      - "/gadd:decompose"
+      - "/gadd:implement"
+      - "/gadd:verify"
+      - "/gadd:close"
+      - "/gadd:archive"
+      - "next command"
+  /gadd:approve:
+    required_phrases:
+      - "Approve exactly one PRD, SDD, or plan gate"
+      - "exactly one approval gate is active"
+      - "approved PRD"
+      - "approved SDD"
+      - "artifacts.plan.status: approved"
+  /gadd:implement:
+    required_sections:
+      - "Built-in TDD Loop"
+    required_phrases:
+      - "approved boundary"
+      - "Do not close external Work Item projections"
+      - "Do not archive Work Items"
+      - "documentation impact"
+  /gadd:verify:
+    required_phrases:
+      - "verification.md"
+      - "Work Item closure"
+      - "human-approved closure"
+  /gadd:close:
+    required_phrases:
+      - "verification.md"
+      - "closure.status"
+      - "/gadd:archive"
+      - "human confirmation"

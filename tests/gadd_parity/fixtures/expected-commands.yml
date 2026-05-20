@@ -1,0 +1,46 @@
+commands:
+  - command: /gadd:setup
+    skill: gadd-setup
+    path: skills/gadd-setup
+  - command: /gadd:next
+    skill: gadd-next
+    path: skills/gadd-next
+  - command: /gadd:triage
+    skill: gadd-triage
+    path: skills/gadd-triage
+  - command: /gadd:research
+    skill: gadd-research
+    path: skills/gadd-research
+  - command: /gadd:scope
+    skill: gadd-scope
+    path: skills/gadd-scope
+  - command: /gadd:elaborate
+    skill: gadd-elaborate
+    path: skills/gadd-elaborate
+  - command: /gadd:refine
+    skill: gadd-refine
+    path: skills/gadd-refine
+  - command: /gadd:approve
+    skill: gadd-approve
+    path: skills/gadd-approve
+  - command: /gadd:design
+    skill: gadd-design
+    path: skills/gadd-design
+  - command: /gadd:plan
+    skill: gadd-plan
+    path: skills/gadd-plan
+  - command: /gadd:decompose
+    skill: gadd-decompose
+    path: skills/gadd-decompose
+  - command: /gadd:implement
+    skill: gadd-implement
+    path: skills/gadd-implement
+  - command: /gadd:verify
+    skill: gadd-verify
+    path: skills/gadd-verify
+  - command: /gadd:close
+    skill: gadd-close
+    path: skills/gadd-close
+  - command: /gadd:archive
+    skill: gadd-archive
+    path: skills/gadd-archive
