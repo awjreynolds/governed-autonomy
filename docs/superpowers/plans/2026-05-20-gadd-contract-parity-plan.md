@@ -152,7 +152,7 @@ Run:
 python3 -m unittest discover tests/gadd_parity
 ```
 
-Expected: pass with zero tests discovered. This confirms the new package is importable before helper code and test modules are added.
+Expected: `NO TESTS RAN` with exit code 5. This confirms the new package path exists before helper code and test modules are added.
 
 - [ ] **Step 5: Commit the fixture scaffolding**
 
@@ -174,7 +174,7 @@ Run:
 python3 -m unittest discover tests/gadd_parity
 ```
 
-Expected: pass with zero tests discovered. Task 3 adds the tests that exercise these helpers.
+Expected: `NO TESTS RAN` with exit code 5. Task 3 adds the tests that exercise these helpers.
 
 - [ ] **Step 2: Implement fixture and manifest loading**
 
