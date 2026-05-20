@@ -7,22 +7,24 @@ from scripts.ga_enforce.decisions import allow, deny, post_block
 
 
 class DecisionsTests(unittest.TestCase):
-    def test_pre_tool_deny_uses_hook_specific_permission_decision(self) -> None:
-        decision = json.loads(deny("blocked")["stdout"])
+    def test_pre_tool_deny_uses_blocking_stderr(self) -> None:
+        result = deny("blocked")
 
-        self.assertEqual(decision["hookSpecificOutput"]["hookEventName"], "PreToolUse")
-        self.assertEqual(decision["hookSpecificOutput"]["permissionDecision"], "deny")
-        self.assertEqual(deny("blocked")["exit_code"], 2)
+        self.assertEqual(result["exit_code"], 2)
+        self.assertEqual(result["stdout"], "")
+        self.assertEqual(result["stderr"], "blocked")
 
-    def test_post_tool_block_uses_post_tool_decision(self) -> None:
-        decision = json.loads(post_block("missing evidence")["stdout"])
+    def test_post_tool_block_uses_exit_zero_json_feedback(self) -> None:
+        result = post_block("missing evidence")
+        self.assertEqual(result["exit_code"], 0)
+        self.assertEqual(result["stderr"], "")
+        decision = json.loads(result["stdout"])
 
         self.assertEqual(decision["hookSpecificOutput"]["hookEventName"], "PostToolUse")
         self.assertEqual(decision["hookSpecificOutput"]["decision"], "block")
-        self.assertEqual(post_block("missing evidence")["exit_code"], 2)
 
     def test_allow_exits_zero_without_stdout(self) -> None:
-        self.assertEqual(allow(), {"exit_code": 0, "stdout": ""})
+        self.assertEqual(allow(), {"exit_code": 0, "stdout": "", "stderr": ""})
 
 
 if __name__ == "__main__":

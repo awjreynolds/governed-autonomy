@@ -93,7 +93,16 @@ enforcement:
 
 The map does not grant authority. It only lets the runtime identify which governed action a pending tool call represents. The active step still uses the authority merge rules above. If the matched action is effectively prohibited for that step, the PreToolUse hook blocks the call.
 
-The hook also blocks write tools during `investigate` steps. PostToolUse can check declared evidence presence when an active step is marked done. It checks files named by `evidence.items[*].path` under the process directory when `evidence.destination` is `repo`.
+The hook also blocks write tools during `investigate` steps. A step becomes active when the runtime writes `.governance/active-step.yml`, usually through `scripts/ga-enforce --start-step <step-id>`.
+
+```yaml
+step: draft
+done:
+  tool_name: Bash
+  command_glob: ga-step done draft
+```
+
+PostToolUse can check declared evidence presence when the active step is marked done. It checks files named by `evidence.items[*].path` under the process directory when `evidence.destination` is `repo`. PostToolUse cannot undo a completed tool call. If evidence is missing, it keeps the active-step marker in place and feeds Claude a block reason.
 
 Hook enforcement constrains tool calls and evidence presence. It does not inspect model reasoning, infer scope, detect cross-tool collusion, or govern anything outside the Claude Code hook harness.
 

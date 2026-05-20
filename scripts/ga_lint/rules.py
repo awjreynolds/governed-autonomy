@@ -192,6 +192,10 @@ def lint(doc: dict[str, Any], governance_path: Path, catalog: CatalogIndex, skil
                 for action_ref, patterns in tool_action_map.items():
                     if not isinstance(action_ref, str) or not (action_ref.startswith("catalog:") or action_ref.startswith("local:")):
                         issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map keys must be action refs"))
+                    elif action_ref.startswith("catalog:") and not catalog.exists(action_ref):
+                        issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map catalog action does not exist"))
+                    elif action_ref.startswith("local:") and _id(action_ref, "local:") not in local_defs:
+                        issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map local action does not resolve"))
                     if not isinstance(patterns, list) or not all(isinstance(pattern, str) and pattern.strip() for pattern in patterns):
                         issues.append(_issue("E015", f"enforcement.tool_action_map.{action_ref}", "tool_action_map values must be non-empty string arrays"))
 

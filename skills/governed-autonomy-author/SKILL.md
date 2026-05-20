@@ -167,7 +167,8 @@ Only after clean pre-emit lint, write:
 - `<process-dir>/skills/<step-id>/SKILL.md` for every step
 - optional `<process-dir>/commands/<process-id>.md` only when an orchestrator command is explicitly part of the process
 - optional `<process-dir>/ga-process.v1.yml` when `--emit-spec` is set
-- optional `<process-dir>/.claude/settings.json` registering `scripts/ga-enforce --pre-tool` and `scripts/ga-enforce --post-tool` hooks when `enforcement.tool_action_map` is present in the accepted state
+- optional `<process-dir>/.claude/settings.json` registering `${CLAUDE_PROJECT_DIR}/scripts/ga-enforce --pre-tool` and `${CLAUDE_PROJECT_DIR}/scripts/ga-enforce --post-tool` hooks when `enforcement.tool_action_map` is present in the accepted state
+- active-step instructions for generated skills when runtime enforcement is enabled: start with `${CLAUDE_PROJECT_DIR}/scripts/ga-enforce --start-step <step-id>`, mark completion with `ga-step done <step-id>`, and clear only after PostToolUse accepts declared evidence
 
 After writing, run `ga-lint <process-dir>/governance.yml` when available as a sanity check. If lint fails after a clean pre-emit lint, report this as a bug in the dialog, not as a user error, and do not claim success.
 

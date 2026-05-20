@@ -17,6 +17,9 @@ python3 scripts/validate-gaps-v1.py gaps/examples/v1/incident-response/ga-proces
 echo "==> Running ga-lint tests"
 python3 -m unittest discover tests/ga_lint -v
 
+echo "==> Running ga-enforce tests"
+python3 -m unittest discover tests/ga_enforce -v
+
 echo "==> Running author exemplar harness"
 python3 tests/author/run_phase_exemplars.py
 

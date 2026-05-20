@@ -9,6 +9,7 @@ from typing import TypedDict
 class HookResult(TypedDict):
     exit_code: int
     stdout: str
+    stderr: str
 
 
 def _json(data: dict) -> str:
@@ -16,33 +17,23 @@ def _json(data: dict) -> str:
 
 
 def allow() -> HookResult:
-    return {"exit_code": 0, "stdout": ""}
+    return {"exit_code": 0, "stdout": "", "stderr": ""}
 
 
 def deny(reason: str) -> HookResult:
     # Hook contract source: https://code.claude.com/docs/en/hooks
     # Retrieved 2026-05-20. Command hooks receive JSON on stdin. PreToolUse
-    # denies with hookSpecificOutput.permissionDecision. The same page says
-    # exit 2 is the blocking exit-code path, while JSON is processed only on
-    # exit 0; this prototype still prints JSON on exit 2 for deterministic
-    # local inspection and uses exit 2 for enforcement.
+    # blocks with exit 2 and stderr. JSON output is only processed on exit 0.
     return {
         "exit_code": 2,
-        "stdout": _json(
-            {
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "permissionDecision": "deny",
-                    "permissionDecisionReason": reason,
-                }
-            }
-        ),
+        "stdout": "",
+        "stderr": reason,
     }
 
 
 def post_block(reason: str) -> HookResult:
     return {
-        "exit_code": 2,
+        "exit_code": 0,
         "stdout": _json(
             {
                 "hookSpecificOutput": {
@@ -52,4 +43,5 @@ def post_block(reason: str) -> HookResult:
                 }
             }
         ),
+        "stderr": "",
     }
