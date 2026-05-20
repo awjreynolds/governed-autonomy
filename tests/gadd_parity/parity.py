@@ -9,6 +9,7 @@ from scripts.ga_lint.loader import load_yaml
 
 
 FRONTMATTER_RE = re.compile(r"\A---\n(?P<body>.*?)\n---\n", re.DOTALL)
+COMMAND_HEADING_RE = re.compile(r"^#\s+(/[A-Za-z0-9][A-Za-z0-9_-]*:[A-Za-z0-9][A-Za-z0-9_-]*)\s*$")
 
 
 def load_fixture(path: Path) -> dict[str, Any]:
@@ -53,6 +54,11 @@ def command_adapter_path(package_root: Path, command: str) -> Path:
     return package_root / "commands" / namespace / f"{name}.md"
 
 
+def actual_adapter_commands(package_root: Path) -> set[str]:
+    commands_dir = package_root / "commands" / "gadd"
+    return {f"/gadd:{path.stem}" for path in commands_dir.glob("*.md")}
+
+
 def frontmatter(content: str) -> dict[str, str]:
     match = FRONTMATTER_RE.match(content)
     if not match:
@@ -88,6 +94,14 @@ def contains_case_insensitive(content: str, phrase: str) -> bool:
     return phrase.lower() in content.lower()
 
 
+def has_command_heading(content: str, command: str) -> bool:
+    for line in content.splitlines():
+        match = COMMAND_HEADING_RE.match(line.strip())
+        if match and match.group(1) == command:
+            return True
+    return False
+
+
 def validate_expected_commands(package_root: Path, expected_commands: list[dict[str, str]]) -> list[str]:
     errors: list[str] = []
     actual = manifest_commands(package_root)
@@ -109,6 +123,19 @@ def validate_expected_commands(package_root: Path, expected_commands: list[dict[
         for key in ("skill", "path"):
             if entry.get(key) != expected[key]:
                 errors.append(f"{command}: expected {key}={expected[key]!r}, got {entry.get(key)!r}")
+    return errors
+
+
+def validate_adapter_file_set(package_root: Path, expected_commands: list[dict[str, str]]) -> list[str]:
+    expected = {item["command"] for item in expected_commands}
+    actual = actual_adapter_commands(package_root)
+    errors: list[str] = []
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing:
+        errors.append(f"missing adapter files: {', '.join(missing)}")
+    if extra:
+        errors.append(f"extra adapter files: {', '.join(extra)}")
     return errors
 
 
@@ -139,7 +166,7 @@ def validate_skill_surface(package_root: Path, command: str, entry: dict[str, An
     expected_name = str(entry.get("skill") or "")
     if data.get("name") != expected_name:
         errors.append(f"{command}: frontmatter name must be {expected_name!r}")
-    if f"# {command}" not in content:
+    if not has_command_heading(content, command):
         errors.append(f"{command}: skill heading missing")
     return errors
 

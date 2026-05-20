@@ -6,6 +6,7 @@ from pathlib import Path
 from tests.gadd_parity.parity import (
     load_fixture,
     manifest_commands,
+    validate_adapter_file_set,
     validate_command_adapter,
     validate_expected_commands,
     validate_skill_contract,
@@ -39,7 +40,7 @@ class GaddContractParityTests(unittest.TestCase):
 
     def test_reference_package_command_adapters_match_manifest(self) -> None:
         commands = manifest_commands(PACKAGE_ROOT)
-        errors: list[str] = []
+        errors = validate_adapter_file_set(PACKAGE_ROOT, self.expected_commands())
         for item in self.expected_commands():
             command = item["command"]
             errors.extend(validate_command_adapter(PACKAGE_ROOT, command, commands[command]))

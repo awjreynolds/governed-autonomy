@@ -122,7 +122,7 @@ contracts:
       - "exactly one approval gate is active"
       - "approved PRD"
       - "approved SDD"
-      - "approved plan"
+      - "artifacts.plan.status: approved"
   /gadd:implement:
     required_sections:
       - "Built-in TDD Loop"
