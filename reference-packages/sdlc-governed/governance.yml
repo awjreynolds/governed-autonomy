@@ -1,0 +1,195 @@
+governanceVersion: "1"
+process:
+  id: sdlc-governed
+  name: Governed SDLC
+  purpose: Govern a software delivery lifecycle executed by bounded agents and reviewed by accountable humans.
+  scope:
+    includes:
+      - Intake, scope, design, planning, decomposition, implementation, verification, approval, and close.
+    excludes:
+      - Production deployment, customer communication, and regulatory certification.
+roles:
+  - id: product_manager
+    label: Product Manager
+    accountable_for: Product scope, acceptance criteria, and approval of requirements changes.
+  - id: tech_lead
+    label: Tech Lead
+    accountable_for: Technical design quality, implementation boundaries, and verification review.
+  - id: engineering_manager
+    label: Engineering Manager
+    accountable_for: Final delivery approval and closure.
+  - id: delivery_agent
+    label: Delivery Agent
+    autonomous: true
+    accountable_for: nothing
+authority:
+  default_autonomy_tier: draft
+  default_allowed_actions:
+    - "catalog:action:draft-artifact"
+    - "catalog:action:record-evidence"
+    - "catalog:action:run-verification"
+  prohibited_actions:
+    - "catalog:action:approve-own-work"
+    - "catalog:action:expand-scope-silently"
+risk:
+  patterns:
+    - "catalog:risk:scope-creep-at-machine-speed"
+    - "catalog:risk:approval-theater"
+  blast_radius: repository
+evidence:
+  destination: repo
+  items:
+    - id: intake-record
+      kind: "catalog:evidence:design-decision"
+      producer: "step:sdlc-scope"
+      consumer: ["role:product_manager"]
+      path: evidence/intake/intake.md
+    - id: prd
+      kind: "catalog:evidence:design-decision"
+      producer: "step:sdlc-scope"
+      consumer: ["role:product_manager", "role:tech_lead"]
+      path: evidence/scope/prd.md
+    - id: sdd
+      kind: "catalog:evidence:design-decision"
+      producer: "step:sdlc-design"
+      consumer: ["role:tech_lead"]
+      path: evidence/design/sdd.md
+    - id: implementation-plan
+      kind: "catalog:evidence:design-decision"
+      producer: "step:sdlc-plan"
+      consumer: ["role:tech_lead"]
+      path: evidence/plan/plan.md
+    - id: work-items
+      kind: "catalog:evidence:design-decision"
+      producer: "step:sdlc-decompose"
+      consumer: ["role:tech_lead"]
+      path: evidence/decompose/work-items.md
+    - id: implementation-record
+      kind: "catalog:evidence:code-change-reference"
+      producer: "step:sdlc-implement"
+      consumer: ["role:tech_lead"]
+      path: evidence/implement/implementation.md
+    - id: verification-record
+      kind: "catalog:evidence:verification-finding"
+      producer: "step:sdlc-verify"
+      consumer: ["role:tech_lead", "role:engineering_manager"]
+      path: evidence/verify/verification.md
+    - id: approval-record
+      kind: "catalog:evidence:approval-attestation"
+      producer: "step:sdlc-approve"
+      consumer: ["role:engineering_manager"]
+      path: evidence/approve/approval.md
+    - id: closure-record
+      kind: "catalog:evidence:state-transition-event"
+      producer: "step:sdlc-close"
+      consumer: ["role:engineering_manager"]
+      path: evidence/close/closure.md
+gates:
+  - id: approve-requirements
+    requires_role: "role:product_manager"
+    requires_evidence: ["evidence:intake-record", "evidence:prd"]
+    blocks_steps: ["step:sdlc-design"]
+  - id: approve-design
+    requires_role: "role:tech_lead"
+    requires_evidence: ["evidence:sdd", "evidence:implementation-plan"]
+    blocks_steps: ["step:sdlc-decompose", "step:sdlc-implement"]
+  - id: approve-close
+    requires_role: "role:engineering_manager"
+    requires_evidence: ["evidence:verification-record", "evidence:approval-record"]
+    blocks_steps: ["step:sdlc-close"]
+escalation:
+  - condition: scope-change-detected
+    to: "role:product_manager"
+  - condition: technical-boundary-unclear
+    to: "role:tech_lead"
+  - condition: verification-fails-after-retry
+    to: "role:engineering_manager"
+state:
+  canonical: repo
+  projections: ["tracker", "pull-request"]
+freshness:
+  drift_policy: Review governance when step authority, tool mappings, or evidence paths change.
+enforcement:
+  tool_action_map:
+    catalog:action:approve-own-work:
+      - "Bash(git push *)"
+      - "Bash(gh pr merge *)"
+    catalog:action:expand-scope-silently:
+      - "Bash(git checkout *)"
+      - "Bash(git reset *)"
+    catalog:action:draft-artifact:
+      - "Write"
+      - "Edit(*)"
+    catalog:action:record-evidence:
+      - "Write(evidence/*)"
+      - "Edit(evidence/*)"
+    catalog:action:run-verification:
+      - "Bash(*test*)"
+      - "Bash(*validate*)"
+steps:
+  - id: sdlc-intake
+    label: Intake
+    purpose: Read the request and classify whether it is ready for governed SDLC scope.
+    step_kind: investigate
+    requires_role: "role:delivery_agent"
+    authority_overrides:
+      allowed_actions:
+        - "catalog:action:gather-context"
+        - "catalog:action:read-repo-evidence"
+  - id: sdlc-scope
+    label: Scope
+    purpose: Draft product requirements and acceptance criteria for human review.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+  - id: sdlc-design
+    label: Design
+    purpose: Draft the technical design and boundary decisions for the scoped work.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+  - id: sdlc-plan
+    label: Plan
+    purpose: Draft an implementation plan with verification and evidence requirements.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+  - id: sdlc-decompose
+    label: Decompose
+    purpose: Split the plan into bounded work items that can be implemented independently.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+  - id: sdlc-implement
+    label: Implement
+    purpose: Draft code and documentation changes inside the approved implementation boundary.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+    authority_overrides:
+      allowed_actions:
+        - "catalog:action:draft-artifact"
+        - "catalog:action:record-evidence"
+        - "catalog:action:run-verification"
+        - "catalog:action:edit-repository-file-in-boundary"
+      autonomy_tier: execute_with_approval
+      justification: Implementation needs bounded repository edits after approved scope and design.
+  - id: sdlc-verify
+    label: Verify
+    purpose: Run validation and record whether the implementation meets the approved evidence requirements.
+    step_kind: execute
+    requires_role: "role:delivery_agent"
+  - id: sdlc-approve
+    label: Approve
+    purpose: Review evidence and record explicit human approval or rejection.
+    step_kind: approve
+    requires_role: "role:engineering_manager"
+    authority_overrides:
+      autonomy_tier: human_only
+  - id: sdlc-close
+    label: Close
+    purpose: Record closure, remaining gaps, and archive readiness after approval.
+    step_kind: approve
+    requires_role: "role:engineering_manager"
+    authority_overrides:
+      autonomy_tier: human_only
+warnings:
+  - Runtime hooks validate active-step authority and declared evidence presence. They do not validate evidence quality.
+  - Human-only approval is represented in governance. The local hook does not authenticate the actor.
+knownGaps:
+  - Gate ordering is lint-visible. Runtime enforcement currently relies on the active step selected by the operator.
