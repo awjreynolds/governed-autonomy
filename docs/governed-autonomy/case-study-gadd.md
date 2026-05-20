@@ -1,10 +1,10 @@
-# Case study: GADD
+# Illustrative mapping: GADD
 
-GADD applies Governed Autonomy to software delivery: moving a unit of software work from unclassified intake through requirements, design, planning, implementation, verification, and closure, with explicit boundaries and human approval at the transitions that matter.
+GADD is an illustrative mapping that applies Governed Autonomy to software delivery: moving a unit of software work from unclassified intake through requirements, design, planning, implementation, verification, and closure, with explicit boundaries and human approval at the transitions that matter.
 
-It's one process. Governed Autonomy is broader. GADD is the version that exists in code in this repository, and the rest of this page maps how the abstract pieces show up in the concrete system.
+It's one process. Governed Autonomy is broader. The rest of this page maps how the abstract pieces would show up in a concrete software-delivery system.
 
-![GADD case study map](assets/gadd-case-study-map.svg)
+![GADD illustrative mapping](assets/gadd-case-study-map.svg)
 
 ## Business process
 
@@ -57,7 +57,11 @@ External planning and review tools (GitHub Issues, Jira, Linear, Asana, and simi
 
 ## What this shows
 
-GADD is one demonstration of the pattern in a domain where, left alone, autonomous execution tends to collapse planning, design, implementation, and review into a single chat loop. The point isn't software-specific. A process becomes safer to delegate when its roles, boundaries, evidence requirements, escalation conditions, approval gates, and canonical state are defined *before* execution accelerates, not after.
+GADD is one illustration of the pattern in a domain where, left alone, autonomous execution tends to collapse planning, design, implementation, and review into a single chat loop. The point isn't software-specific. A process becomes safer to delegate when its roles, boundaries, evidence requirements, escalation conditions, approval gates, and canonical state are defined *before* execution accelerates, not after.
+
+## Status of evidence
+
+GADD is not yet adopted in this repository as a runnable skill set. No measurements against the outcome metrics in `process-assessment.md` section 6 are available. The mitigation table shows the framework can be applied to a software-delivery process. It does not show the framework has been validated in production.
 
 ## Read next
 

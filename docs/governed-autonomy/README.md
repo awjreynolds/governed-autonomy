@@ -34,13 +34,13 @@ This isn't a software pattern or a vertical-specific framework. Anywhere work mo
 
 ## Where GADD fits
 
-GADD is the first documented case study in this repository. It's a software-delivery methodology that applies Governed Autonomy to intake, requirements, design, planning, implementation, verification, and closure. It's one process. Governed Autonomy is the broader pattern.
+GADD is the first illustrative mapping in this repository. It's a software-delivery methodology that applies Governed Autonomy to intake, requirements, design, planning, implementation, verification, and closure. It's one process. Governed Autonomy is the broader pattern.
 
 ## Read next
 
 - [Operating model](operating-model.md)
 - [Process assessment](process-assessment.md)
 - [Uncontrolled AI risk patterns](uncontrolled-ai-risk-patterns.md)
-- [GADD case study](case-study-gadd.md)
+- [GADD illustrative mapping](case-study-gadd.md)
 - [Related landscape](related-landscape.md)
 - [References](references.md)
