@@ -162,6 +162,12 @@ class RuleTests(unittest.TestCase):
     def test_e015_enforcement_block_malformed(self) -> None:
         self.check_rule("E015", lambda doc, _root: doc.update({"enforcement": {"tool_action_map": {"catalog:action:draft-artifact": "Write"}}}))
 
+    def test_e015_enforcement_unknown_catalog_action(self) -> None:
+        self.check_rule("E015", lambda doc, _root: doc.update({"enforcement": {"tool_action_map": {"catalog:action:not-real": ["Bash(git push *)"]}}}))
+
+    def test_e015_enforcement_undefined_local_action(self) -> None:
+        self.check_rule("E015", lambda doc, _root: doc.update({"enforcement": {"tool_action_map": {"local:not-real": ["Write"]}}}))
+
     def test_warnings(self) -> None:
         mutations = {
             "W001": lambda doc: doc.pop("freshness"),

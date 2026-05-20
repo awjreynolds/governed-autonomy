@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.ga_enforce.action_map import match_tool_action
-from scripts.ga_enforce.active_step import clear_active_step, read_active_step
+from scripts.ga_enforce.active_step import clear_active_step, read_active_step, write_active_step
 from scripts.ga_enforce.decisions import HookResult, allow, deny, post_block
 from scripts.ga_lint.discovery import discover_governance
 from scripts.ga_lint.loader import load_yaml
@@ -25,12 +25,18 @@ def build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--pre-tool", action="store_true", help="Evaluate a Claude Code PreToolUse event")
     mode.add_argument("--post-tool", action="store_true", help="Evaluate a Claude Code PostToolUse event")
     mode.add_argument("--verify", action="store_true", help="Verify enforcement configuration")
+    mode.add_argument("--start-step", metavar="STEP_ID", help="Mark a governed step active")
+    mode.add_argument("--clear-step", action="store_true", help="Clear the active governed step")
+    parser.add_argument("--done-tool", default="Bash", help="Tool name that marks the active step done")
+    parser.add_argument("--done-command-glob", help="Bash command glob that marks the active step done")
     return parser
 
 
 def _emit(result: HookResult) -> int:
     if result["stdout"]:
         print(result["stdout"])
+    if result["stderr"]:
+        print(result["stderr"], file=sys.stderr)
     return result["exit_code"]
 
 
@@ -99,6 +105,8 @@ def _done_marker_matches(active: dict[str, Any], hook_input: dict[str, Any]) -> 
 def _required_evidence_paths(doc: dict[str, Any], step_id: str) -> list[str]:
     paths: list[str] = []
     evidence = doc.get("evidence") if isinstance(doc.get("evidence"), dict) else {}
+    if evidence.get("destination") != "repo":
+        return paths
     for item in evidence.get("items") or []:
         if isinstance(item, dict) and item.get("producer") == f"step:{step_id}":
             path = item.get("path")
@@ -127,6 +135,29 @@ def _post_tool(hook_input: dict[str, Any]) -> HookResult:
     return allow()
 
 
+def _start_step(step_id: str, done_tool: str, done_command_glob: str | None) -> HookResult:
+    process_dir, _governance_path, doc = _process_context({"cwd": str(Path.cwd())})
+    if not _active_step_doc(doc, step_id):
+        return deny(f"unknown governed step: {step_id}")
+    write_active_step(
+        process_dir,
+        {
+            "step": step_id,
+            "done": {
+                "tool_name": done_tool,
+                "command_glob": done_command_glob or f"ga-step done {step_id}",
+            },
+        },
+    )
+    return allow()
+
+
+def _clear_step() -> HookResult:
+    process_dir, _governance_path, _doc = _process_context({"cwd": str(Path.cwd())})
+    clear_active_step(process_dir)
+    return allow()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -136,6 +167,10 @@ def main(argv: list[str] | None = None) -> int:
             return _emit(_pre_tool(hook_input))
         if args.post_tool:
             return _emit(_post_tool(hook_input))
+        if args.start_step:
+            return _emit(_start_step(args.start_step, args.done_tool, args.done_command_glob))
+        if args.clear_step:
+            return _emit(_clear_step())
         _process_context(hook_input)
         return _emit(allow())
     except Exception as exc:  # noqa: BLE001 - hook diagnostics must be clean

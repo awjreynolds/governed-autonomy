@@ -37,6 +37,43 @@ class CliTests(unittest.TestCase):
             check=False,
         )
 
+    def run_command(self, *args: str) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(ROOT)
+        return subprocess.run(
+            ["python3", "-m", "scripts.ga_enforce.cli", *args],
+            cwd=self.process,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def test_wrapper_runs_from_process_directory(self) -> None:
+        result = subprocess.run(
+            [str(ROOT / "scripts" / "ga-enforce"), "--verify"],
+            cwd=self.process,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+
+    def test_start_and_clear_step_manage_active_step_marker(self) -> None:
+        started = self.run_command("--start-step", "draft")
+
+        self.assertEqual(started.returncode, 0, started.stderr + started.stdout)
+        marker = self.process / ".governance" / "active-step.yml"
+        self.assertTrue(marker.exists())
+        self.assertIn("step: draft", marker.read_text(encoding="utf-8"))
+        self.assertIn("command_glob: ga-step done draft", marker.read_text(encoding="utf-8"))
+
+        cleared = self.run_command("--clear-step")
+
+        self.assertEqual(cleared.returncode, 0, cleared.stderr + cleared.stdout)
+        self.assertFalse(marker.exists())
+
     def test_pre_tool_blocks_mapped_prohibited_action(self) -> None:
         write_active_step(self.process, {"step": "draft"})
 
@@ -46,8 +83,8 @@ class CliTests(unittest.TestCase):
         )
 
         self.assertNotEqual(result.returncode, 0)
-        decision = json.loads(result.stdout)
-        self.assertEqual(decision["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.assertEqual(result.stdout, "")
+        self.assertIn("prohibited", result.stderr)
 
     def test_pre_tool_blocks_write_tool_during_investigate_step(self) -> None:
         write_active_step(self.process, {"step": "investigate"})
@@ -58,7 +95,8 @@ class CliTests(unittest.TestCase):
         )
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("read-only", result.stdout)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("read-only", result.stderr)
 
     def test_pre_tool_is_advisory_when_tool_action_map_absent(self) -> None:
         governance = self.process / "governance.yml"
@@ -85,7 +123,10 @@ class CliTests(unittest.TestCase):
 
         missing = self.run_cli("--post-tool", payload)
 
-        self.assertNotEqual(missing.returncode, 0)
+        self.assertEqual(missing.returncode, 0, missing.stderr + missing.stdout)
+        decision = json.loads(missing.stdout)
+        self.assertEqual(decision["hookSpecificOutput"]["decision"], "block")
+        self.assertIn("missing required evidence", decision["hookSpecificOutput"]["reason"])
         self.assertTrue((self.process / ".governance" / "active-step.yml").exists())
 
         (self.process / "evidence").mkdir()
@@ -93,6 +134,26 @@ class CliTests(unittest.TestCase):
         present = self.run_cli("--post-tool", payload)
 
         self.assertEqual(present.returncode, 0, present.stderr + present.stdout)
+        self.assertFalse((self.process / ".governance" / "active-step.yml").exists())
+
+    def test_post_tool_does_not_apply_repo_file_check_to_external_evidence(self) -> None:
+        governance = self.process / "governance.yml"
+        governance.write_text(governance.read_text(encoding="utf-8").replace("destination: repo", "destination: tracker"), encoding="utf-8")
+        active = {"step": "draft", "done": {"tool_name": "Bash", "command_glob": "ga-step done draft"}}
+        write_active_step(self.process, active)
+
+        result = self.run_cli(
+            "--post-tool",
+            {
+                "cwd": str(self.process),
+                "hook_event_name": "PostToolUse",
+                "tool_name": "Bash",
+                "tool_input": {"command": "ga-step done draft"},
+                "tool_response": {"stdout": "", "stderr": "", "interrupted": False, "isImage": False},
+            },
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
         self.assertFalse((self.process / ".governance" / "active-step.yml").exists())
 
 
