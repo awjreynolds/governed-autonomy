@@ -35,8 +35,8 @@ If the mode is unclear, ask one clarifying question. Do not invent organization-
 ## Required Reads
 
 - `docs/governed-autonomy/operating-model.md`
-- `docs/governed-autonomy/phase-exemplars/phase-01-process-identity.md` through `phase-10-per-step-narrowing.md`
-- `gaps/catalogs/v1/actions.yml`, `evidence-kinds.yml`, and `risk-patterns.yml` as suggestion material
+- Read the corresponding file under `docs/governed-autonomy/phase-exemplars/` when entering each phase, from `phase-01-process-identity.md` through `phase-10-per-step-narrowing.md`.
+- Consult `gaps/catalogs/v1/actions.yml`, `gaps/catalogs/v1/evidence-kinds.yml`, or `gaps/catalogs/v1/risk-patterns.yml` when suggesting actions, evidence kinds or risk patterns.
 - Supplied notes, existing skills, or process directory
 
 ## Grill-Me Loop
